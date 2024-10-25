@@ -1,0 +1,1448 @@
+{% extends "base.html" %}
+{% load cache %}
+{% block title %}Календарь{% endblock %}
+{% load user_filters %}
+{% load static %}
+{% block header %}
+<script src="{% static 'libs/html2pdf.bundle.min.js' %}"></script>
+<script src="{% static 'libs/xlsx.full.min.js' %}"></script>
+<div style="display: flex; flex-direction: row; justify-content: left; align-items: center; flex-wrap: nowrap; width: 100%;">
+    <a style="color: black; font-weight: bold; font-size: 38px; text-align: left; line-height: 50px; white-space: nowrap;">Календарь отпусков на {{year}}</a>
+    <div style="display: flex; flex-direction: row; align-items: center; margin-left: 20px; gap: 20px; flex-grow: 1; justify-content: flex-end;">
+        <div class="flex-container">
+		<select name="filtr_otd" id="filtr_otd" style="font-size: 18px; padding: 5px 10px; border: 1px solid rgb(206, 202, 202); color: #808080; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; width: 150px; height: 35px; cursor: pointer;" onchange="updateYearDropdown()">
+            <option value="0" disabled selected>Выберите отдел</option>
+            {% for otd in otds_for_choise %}
+                <option value="{{ otd }}" {% if otd == current_otd %}selected{% endif %}>{{ otd }}</option>
+            {% endfor %}
+            <option value="0" {% if current_otd == 0 %}selected{% endif %}>Все отделы</option>
+        </select>
+        <select id="filtr_year" name="filtr_year" style="font-size: 18px; padding: 5px 10px; border: 1px solid rgb(206, 202, 202); color: #808080; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; width: 150px; height: 35px; cursor: pointer;" onchange="updateFilters()">
+            <option value="0" disabled selected>Выберите год</option>
+            <option value="2023">2023</option>
+            <option value="2024">2024</option>
+            <option value="2025">2025</option>
+        </select>
+        <select id="viewType" style="font-size: 18px; padding: 5px 10px; border: 1px solid rgb(206, 202, 202); color: #808080; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; width: 145px; height: 35px; cursor: pointer;" onchange="redirectToView()">
+            <option value="0" disabled selected>Вид</option>
+            <option value="current">Календарь</option>
+            <option value="custom">График: дни</option>
+        </select>
+        <select id="actionSelect" style="font-size: 18px; padding: 5px 10px; border: 1px solid rgb(206, 202, 202); color: #808080; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; width: 171px; height: 35px; cursor: pointer;">
+            <option value="" disabled selected>Экспорт</option>
+            <option value="export">Лист ознакомления</option>
+            <option value="excel">Файл Excel</option>
+        </select>
+		<a class="btn sib" style="border: 1px solid rgb(206, 202, 202); background-color:#15a362; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; width: 180px; height: 35px; font-size: 18px; padding: 5px 10px; border-radius: 3px;" href="#" onclick="openFormCreateVac(this)">
+			<div style="cursor: pointer; justify-content: center; align-items: center;">
+				<img style="height: 16px; position: relative; top: -2px; left: -7px;" src={% static "trello_plus.png" %}>
+			</div>
+			Добавить отпуск
+		</a>
+		</div>
+    </div>
+</div>
+<div style="display: flex; flex-direction: row; justify-content: left; align-items: center; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; font-size: 18px; color: #808080;">
+    Параметры фильтрации: отдел<span style="margin-left: 2px; color: #20c997;">&nbsp;{% if otd == 0%}Все отделы{% else %}{{ otd }}{% endif %},&nbsp;</span>год<span style="color: #20c997;">&nbsp;{{ year }}</span>
+</div>
+
+<script>
+    function cleanURL(url) {
+		console.log("Исходный URL:", url); // Логируем исходный URL
+		// Удаляем фрагменты после '#' и убираем возможные параметры после '?', а также сам '#'
+		const cleanedUrl = url.split('#')[0].split('?')[0].trim(); // Убираем параметры и фрагменты, включая '#'
+		console.log("Очищенный URL:", cleanedUrl); // Логируем очищенный URL
+		return cleanedUrl;
+	}
+
+	function updateYearDropdown() {
+		var selectedOtd = document.getElementById('filtr_otd').value;
+		var yearDropdown = document.getElementById('filtr_year');
+		if (selectedOtd != "0") {
+			yearDropdown.style.display = 'inline-block'; // Показываем выпадающий список года
+		} else {
+			yearDropdown.style.display = 'inline-block'; // Скрываем не нужно, чтобы оставалось видимым
+		}
+	}
+
+	function updateFilters() {
+		var selectedOtd = document.getElementById('filtr_otd').value;
+		var selectedYear = document.getElementById('filtr_year').value;
+
+		// Сохранение текущих значений года и отдела, если они не выбраны
+		if (selectedYear == "0") {
+			selectedYear = getURLParameters().year; // Получаем год из URL
+		}
+		if (selectedOtd == "0") {
+			selectedOtd = getURLParameters().otd; // Получаем отдел из URL
+		}
+
+		if (selectedYear != "0" && selectedOtd != "0") {
+			window.location.href = cleanURL("{% url 'vac_2' 0 0 %}".replace("0/0", selectedYear + "/" + selectedOtd));
+		} else if (selectedOtd == "0" && selectedYear != "0") {
+			window.location.href = cleanURL("{% url 'vac_2' 0 0 %}".replace("0/0", selectedYear + "/0"));
+		} else if (selectedOtd == "0" && selectedYear == "0") {
+			window.location.href = cleanURL("{% url 'vac_2' 2024 0 %}"); // Замените на текущий год
+		} else if (selectedYear == "0" && selectedOtd != "0") {
+			alert('Пожалуйста, выберите год.');
+		}
+	}
+
+	function getURLParameters() {
+		var url = cleanURL(window.location.href); // Убираем все после '#'
+		console.log("Текущий URL: " + url); // Выводим URL для отладки
+
+		// Разбиваем URL по "/" и фильтруем пустые элементы
+		var urlParts = url.split('/').filter(function(part) {
+			return part.length > 0;
+		});
+
+		console.log("URL Parts: ", urlParts); // Для отладки выводим части URL
+
+		// Проверяем, что у нас достаточно сегментов, чтобы вытащить год и отдел
+		if (urlParts.length < 6) {  // Проверка, что сегментов URL достаточно
+			alert("URL не содержит нужных параметров");
+			return null;
+		}
+
+		// Последний элемент — это отдел, предпоследний — год
+		var selectedOtd = urlParts[urlParts.length - 1];  // Последний элемент URL
+		var selectedYear = urlParts[urlParts.length - 2]; // Предпоследний элемент URL
+
+		console.log("Выбранный год: " + selectedYear);
+		console.log("Выбранный отдел: " + selectedOtd);
+
+		// Возвращаем параметры фильтрации
+		return {
+			year: selectedYear,
+			otd: selectedOtd
+		};
+	}
+
+	function redirectToView() {
+		var viewType = document.getElementById('viewType').value;
+		var filters = getURLParameters(); // Получаем текущие параметры
+
+		// Проверяем, что фильтры были извлечены корректно
+		if (!filters || !filters.year || !filters.otd) {
+			alert('Не удается определить выбранные фильтры.');
+			return;
+		}
+
+		if (viewType === 'current') {
+			// Переход на календарь с сохранением параметров
+			window.location.href = cleanURL("{% url 'vac_2' 0 0 %}".replace("0/0", filters.year + "/" + filters.otd));
+		} else if (viewType === 'custom') {
+			// Переход на график дней с сохранением параметров
+			window.location.href = cleanURL("{% url 'vac_2_dni' 0 0 %}".replace("0/0", filters.year + "/" + filters.otd));
+		}
+	}
+
+	// Вызов функции при загрузке страницы
+	window.onload = function() {
+		var filters = getURLParameters();
+		if (filters) {
+			// Устанавливаем значения в селекторы
+			document.getElementById('filtr_year').value = filters.year;
+			document.getElementById('filtr_otd').value = filters.otd;
+			updateYearDropdown();
+		} else {
+			// В случае, если параметры не были получены, устанавливаем значения по умолчанию
+			document.getElementById('filtr_year').value = "0";
+			document.getElementById('filtr_otd').value = "0";
+		}
+	};
+	
+    document.getElementById('actionSelect').addEventListener('change', function () { 
+    const selectedValue = this.value;
+
+    if (selectedValue === 'export') {
+        // Получаем текущую дату
+        const today = new Date();
+        const formattedDate = today.toLocaleDateString('ru-RU');
+		
+		// Создаем содержимое PDF
+        let pdfContent = `
+            <h2 align='center'>График отпусков на {{year}} год</h2>
+			<div style="height: 20px;"></div>
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead align='center'>
+                    <tr>
+                        <th style="border: 1px solid black;">ФИО</th>
+                        <th style="border: 1px solid black;">Отдел</th>
+						<th style="border: 1px solid black;">Дата отпуска</th>						
+                        <th style="border: 1px solid black;">Календарных дней</th>
+						<th style="border: 1px solid black;">Подпись</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        // Находим все строки таблицы с данными
+        const tableRows = Array.from(document.querySelectorAll('table tr')).slice(1); // Пропускаем заголовок
+
+        // Сортируем по фамилии
+        tableRows.sort((rowA, rowB) => {
+            const nameA = rowA.querySelector('th').innerText.trim();
+            const nameB = rowB.querySelector('th').innerText.trim();
+            const lastNameA = nameA.split(' ')[1]; // Получаем фамилию
+            const lastNameB = nameB.split(' ')[1]; // Получаем фамилию
+            return lastNameA.localeCompare(lastNameB, 'ru');
+        });
+
+        // Пробегаем по каждой строке таблицы и вытаскиваем данные
+        tableRows.forEach(row => {
+            const cells = row.querySelectorAll('th'); // Используем 'th' для данных
+            if (cells.length > 0) {
+                const employeeName = cells[0].innerText.trim();
+                const department = cells[1].innerText.trim();
+                const totalDays = cells[2].innerText.trim();
+
+                // Находим скрытые даты отпусков
+                const vacationDatesList = cells[3].querySelectorAll('ul li'); // Даты отпусков
+                const vacationDaysList = cells[4].querySelectorAll('ul li'); // Количество дней отпуска
+
+                // Проверяем, что даты отпусков и количество дней совпадают по количеству
+                vacationDatesList.forEach((vacationDateItem, idx) => {
+                    const vacationDate = vacationDateItem.innerText.trim();
+                    const vacationDays = vacationDaysList[idx] ? vacationDaysList[idx].innerText.trim() : '';
+
+                    // Добавляем строку в содержимое PDF для каждой даты отпуска
+                    pdfContent += `
+                        <tr style="page-break-inside: avoid;">
+                            <td style="border: 1px solid black;">${employeeName}</td>
+                            <td style="border: 1px solid black;">${department}</td>
+                            <td style="border: 1px solid black;">${vacationDate}</td>
+                            <td style="border: 1px solid black;">${vacationDays}</td>
+                            <td style="border: 1px solid black;"></td>
+                        </tr>
+                    `;
+                });
+            }
+        });
+
+        pdfContent += `
+                </tbody>
+            </table>
+			<div style="margin-top: 40px; font-size: 16px; page-break-inside: avoid;">
+                <p>Руководитель:</p>
+                <p>Подпись руководителя:</p>
+                <p>м.п.</p>
+                <p>Дата составления: ${formattedDate}</p>
+            </div>
+        `;
+
+        // Опции для html2pdf
+        const options = {
+            margin: [0.5, 0.5, 0.5, 0.5],
+            filename: 'График отпусков на {{year}}.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
+        };
+
+        // Генерация PDF с помощью html2pdf
+        html2pdf().from(pdfContent).set(options).save();
+
+        this.value = ''; // Сбрасываем значение после выполнения действия
+    }
+
+	// Экспорт в Excel
+	if (selectedValue === 'excel') {
+		let tableData = [];
+		let tableHeaders = ["ФИО", "Отдел", "Дата отпуска", "Дата окончания"];
+		
+		// Заголовок
+		tableData.push([`График отпусков на {{year}}`]);
+		tableData.push(tableHeaders);  // Заголовки столбцов
+
+		// Получаем строки таблицы
+		const tableRows = Array.from(document.querySelectorAll('table tr')).slice(1);
+		
+		// Временное хранилище для строк данных
+		let rawData = [];
+		
+		tableRows.forEach(row => {
+			const cells = row.querySelectorAll('th');
+			if (cells.length > 0) {
+				const employeeName = cells[0].innerText.trim();
+				const department = cells[1].innerText.trim();
+
+				// Извлекаем даты отпуска и даты окончания из скрытых столбцов
+				const vacationDatesList = cells[3].querySelectorAll('ul li');
+				const vacationEndDatesList = cells[5].querySelectorAll('ul li'); // Список дат окончания
+
+				vacationDatesList.forEach((vacationDateItem, idx) => {
+					const vacationStartDate = vacationDateItem.innerText.trim();
+					const endDate = vacationEndDatesList[idx] ? vacationEndDatesList[idx].innerText.trim() : ''; // Дата окончания
+
+					// Сохраняем данные во временный массив
+					rawData.push([employeeName, department, vacationStartDate, endDate]);
+				});
+			}
+		});
+
+		// Функция для сортировки по фамилии (второе слово в строке ФИО)
+		rawData.sort((a, b) => {
+			const lastNameA = a[0].split(' ')[1] || '';
+			const lastNameB = b[0].split(' ')[1] || '';
+
+			return lastNameA.localeCompare(lastNameB, 'ru');
+		});
+
+		// Добавляем отсортированные данные в основной массив
+		tableData = tableData.concat(rawData);
+
+		// Создание нового листа с данными
+		const worksheet = XLSX.utils.aoa_to_sheet(tableData);
+
+		// Объединение ячеек для заголовка
+		worksheet['!merges'] = [
+			{ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }  // Объединить ячейки
+		];
+
+		// Стиль для заголовка
+		worksheet['A1'].s = {
+			font: { bold: true, sz: 14 },
+			alignment: { horizontal: 'center' },
+			border: {
+				top: { style: "medium" },
+				bottom: { style: "medium" }
+			}
+		};
+
+		// Стиль для заголовков столбцов
+		for (let C = 0; C < tableHeaders.length; C++) {
+			const cellAddress = XLSX.utils.encode_cell({ r: 1, c: C });
+			worksheet[cellAddress].s = {
+				font: { bold: true },
+				alignment: { horizontal: 'center' },
+				border: {
+					top: { style: "medium" },
+					bottom: { style: "medium" }
+				}
+			};
+		}
+
+		// Настройка ширины столбцов
+		worksheet['!cols'] = [
+			{ wch: 25 },  // ФИО
+			{ wch: 30 },  // Отдел
+			{ wch: 17 },  // Дата отпуска
+			{ wch: 17 }   // Дата окончания
+		];
+
+		// Границы для ячеек с данными
+		const range = XLSX.utils.decode_range(worksheet['!ref']);
+		for (let R = range.s.r + 2; R <= range.e.r; ++R) { 
+			for (let C = range.s.c; C <= range.e.c; ++C) {
+				const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+				if (!worksheet[cellAddress]) worksheet[cellAddress] = {}; 
+				worksheet[cellAddress].s = {
+					border: {
+						top: { style: "medium" },
+						bottom: { style: "medium" },
+						left: { style: "medium" },
+						right: { style: "medium" }
+					},
+					alignment: { horizontal: 'center' }  // Центрирование всех данных
+				};
+			}
+		}
+
+		// Создание книги и добавление листа
+		const workbook = XLSX.utils.book_new();
+		XLSX.utils.book_append_sheet(workbook, worksheet, 'Отпуска {{year}}');
+		console.log(workbook);
+		// Запись и сохранение файла
+		XLSX.writeFile(workbook, 'График отпусков на {{year}}' + '.xlsx');
+		this.value = '';
+	}
+	});
+</script>
+
+<style>
+	aside {
+		display: none;
+	}
+
+	#filtr_otd, #filtr_year {
+		display: none;
+	}
+	
+	.flex-container {
+		display: flex;
+		flex-direction: row;
+		justify-content: flex-start;
+		align-items: center;
+		gap: 20px;
+		width: 100%;
+	}
+
+	.flex-container select, .flex-container a {
+		flex-grow: 1; /* Позволяет элементам занимать оставшееся пространство */
+	}
+
+	.calendar-wrapper {
+		position: relative; /* Для установки абсолютного позиционирования бокового блока */
+		white-space: nowrap;
+		outline: 1px solid #ccc;
+		padding-left: 201px;
+		box-shadow: 0 1px 10px rgba(116, 116, 116, 0.2);
+		width: 144%;
+	}
+
+	.calendar-container {
+		overflow-x: auto;
+		overflow-y: hidden;
+		white-space: nowrap;
+		outline: 1px solid #ccc;
+		padding: 0;
+		width: 100%;
+		max-width: none;
+		margin: 0;
+		padding-left: 14px;
+		font-size: 17px;
+		font-family: 'Courier New', sans-serif;
+		height: auto;
+		user-select: none;
+		cursor: ew-resize;
+	}
+
+	.row {
+		display: block;
+		white-space: nowrap;
+		margin-bottom: 0px;
+		height: 35px;
+		position: relative;
+		width: 100%;
+	}
+
+	.month, .day, .weekday {
+		width: 30px;
+		height: 35px;
+		display: inline-block;
+		text-align: center;
+		align-items: center;
+		line-height: 35px;
+		border-right: 1px solid #ccc; /* Только правая граница */
+		border-bottom: 1px solid #ccc; /* Только нижняя граница */
+		box-sizing: border-box;
+		color: #707070;
+	}
+
+	/* Убираем правую границу у последней ячейки в строке */
+	.row .month:last-child,
+	.row .day:last-child,
+	.row .weekday:last-child {
+		border-right: none;
+	}
+
+	.info-row {
+		height: 70px;
+		position: relative;
+		border-bottom: 1px solid #ccc;
+	}
+
+	.employee-row {
+		height: 70px; /* Убедитесь, что высота соответствует height info-row */
+		position: relative; /* Относительное позиционирование для прямоугольников */
+	}
+
+	.side-block {
+		position: absolute;
+		left: 0;
+		top: 0;
+		width: 200px; /* Ширина бокового блока */
+		height: 100%; /* Высота блока совпадает с календарем */
+		background-color: #f9f9f9;
+	}
+
+	.side-block .top-section, .side-block .middle-section {
+		padding: 2px;
+		text-align: center;
+	}
+
+	.side-block .top-section {
+		height: 105px; /* Высота, равная трем строкам календаря */
+		border-bottom: 1px solid #ccc;
+	}
+
+	.side-block .middle-section {
+		height: 70px; /* Высота строки с дополнительной информацией */
+		border-bottom: 1px solid #ccc;
+	}
+
+	.side-block .bottom-section {
+		height: 105px;
+	}
+
+	.vacation-rect {
+		margin-top: 2px;
+		border-radius: 4px;
+		z-index: 20;
+	}
+
+	.name-element {
+		white-space: nowrap;          
+		overflow: hidden;             
+		text-decoration: underline;  
+		font-size: 19px;              
+		font-family: Arial, sans-serif; 
+		display: flex;                
+		align-items: center;        
+		height: 100%;               
+		padding: 6px;          
+	}
+
+	.vacation-text {
+		color: black;               
+		text-align: left;          
+		line-height: 66px;         
+		font-size: 19px;            
+		font-family: Arial, sans-serif; 
+		padding-left: 10px;      
+		white-space: nowrap;
+		overflow: hidden;        
+		text-overflow: ellipsis;  /* Добавляем свойство для многоточия */
+    	max-width: 100%;           
+	}
+
+	.day:hover, .weekday:hover, .month:hover, .middle-section:hover {
+		background-color: rgba(0, 0, 0, 0.1); /* Легкое затемнение при наведении */
+		transition: background-color 0.3s; /* Плавный переход для изменения цвета */
+	}
+
+	.blue-dashed-line {
+		position: absolute;      
+		width: 1px;            
+		height: 70px;           
+		border-left: 1px dashed #007FEF; 
+		z-index: 50;         
+	}
+
+	.dashed-line {
+		position: absolute;      
+		width: 1px;            
+		height: 70px;           
+		border-left: 1px dashed #ccc; 
+		z-index: 10;          
+	}
+
+	.blue-dot {
+		width: 6px;                     
+		height: 6px;                     
+		background-color: blue;         
+		border-radius: 50%;             
+		position: absolute;             
+		left: 50%;                      
+		transform: translateX(-50%);    
+		z-index: 100;                    
+		bottom: -38px;                  
+	}
+
+	.tooltip-content {
+		position: relative;
+		background: white;
+		border-radius: 4px;
+		z-index: 400;
+	}
+
+	.tooltip-arrow {
+		width: 0;
+		height: 0;
+		border-left: 10px solid transparent;
+		border-right: 10px solid transparent;
+		border-top: 10px solid rgb(0, 0, 0); /* Цвет стрелочки */
+		position: absolute;
+		left: 50%;
+		transform: translateX(-50%);
+		bottom: -10px; /* Смещение стрелочки вниз */
+		z-index: 300; /* Отправляем стрелочку под тултип */
+	}
+</style>
+{% endblock %}
+
+{% block aside %}
+<aside>
+	{% include 'includes/aside_vac_new.html' %}
+</aside>
+{% endblock %}
+
+{% block content %}
+<div class="calendar-wrapper">
+	<div class="calendar-container">
+		<div class="side-block">
+			<div class="top-section"></div>
+			<div class="middle-section"></div>
+		</div>
+		<div class="row" id="months"></div>
+		<div class="row" id="days"></div>
+		<div class="row" id="weekdays"></div>
+		<div class="row info-row" id="info-row"></div>
+	</div>
+</div>
+<div style="width: 110%; display: flex; flex-direction: row; margin-top: 15px;  display: none;">
+	<table style="width: 900px;">
+		<tr style="border-bottom: 1px solid black;">
+			<th style="text-align: left;">Сотрудник</th><th>Отдел</th><th>Дней</th>
+			<th style="display: none;">Дата отпуска</th><th style="display: none;">Календарных дней</th><th style="display: none;">Дата окончания</th>
+		</tr>
+		{% for key, value in vacations_by_user.items %}
+			<tr style="border-bottom: 1px solid rgb(187, 185, 185); height: 40px;"
+				class="vacation-cell" 
+				data-employee-name="{{key}}" 
+				data-start-date="{% for start_date, days_count in value.vacation_start_dates %}{{start_date}}{% if not forloop.last %}, {% endif %}{% endfor %}" 
+				data-end-date="{% for end_date in value.vacation_end_dates %}{{end_date}}{% if not forloop.last %}, {% endif %}{% endfor %}">
+				<th style="text-align: left;">
+					<div style="display: flex; flex-direction: row; justify-content: left; align-items: center;">
+						<div style="width: 15px; height: 15px; background: {{value.color}}; border: 1px solid black; margin-right: 6px;"></div>
+						<a style="color: black" href="#" onclick="filtrByUser(this)">{{key}}</a>
+					</div>
+				</th>
+				<th>{{value.otd }}</th>
+				<th>{{value.sum }}</th>
+				<th style="display: none;">
+					<ul style="list-style-type: none; padding: 0; text-align: center;">
+						{% for start_date, days_count in value.vacation_start_dates %}
+							<li>{{ start_date }}</li>
+						{% endfor %}
+					</ul>
+				</th>
+
+				<th style="display: none;">
+					<ul style="list-style-type: none; padding: 0; text-align: center;">
+						{% for start_date, days_count in value.vacation_start_dates %}
+							<li>{{ days_count }} дней</li>
+						{% endfor %}
+					</ul>
+				</th>
+
+				<th style="display: none;">
+					<ul style="list-style-type: none; padding: 0; text-align: center;">
+						{% for end_date in value.vacation_end_dates %}
+							<li>{{ end_date }}</li> <!-- Дата окончания отпуска -->
+						{% endfor %}
+					</ul>
+				</th>
+			</tr>
+		{% endfor %}
+	</table>
+	<div style="border: 1px solid rgb(187, 185, 185); padding: 5px;">
+		<div id="no_vacation_message">В данный момент нет сотрудников в отпуске.</div>
+		<div id="info" style="margin-top: 20px; border: 1px solid rgb(187, 185, 185);"></div>
+	</div>
+</div>
+<div id="add_new_vac" style="display: none; flex-direction: column; justify-content: top; align-items: center; position: absolute; left: 420px; top: 150px;
+	border: 1px solid black; width: 280px; height: 360px auto; background: rgb(187, 185, 185); opacity: 0.9;">
+	<div style="display: flex; flex-direction: row; justify-content: right; align-items: right; margin: 10px; width: 250px;">
+		<div style="background: white; width: 30px; height: 30px; border-radius: 3px;">
+			<div style="transform: rotate(-45deg); width: 30px; height: 30px; font-size: 18px; cursor: pointer;" onclick="closeForm()">+</div>
+		</div>
+	</div>
+	<div style="width: 250px; padding: 2px 5px; color:black;">Сотрудник</div>
+	<select name="filtr_user" id="filtr_user" style="font-size: 18px; padding: 2px 5px; border: 1px solid rgb(206, 202, 202); color: #808080; font-family: 'Calibri';
+									font-style: normal; font-weight: 400; line-height: 22px; width: 250px; height: 35px; cursor: pointer;">
+		{% for user in otd_users_full_names %}
+			<option id="{{user.id}}" value="{{user.get_full_name}}">{{user.get_full_name}}</option>
+		{% endfor %}
+
+	</select>
+	<div style="width: 250px; padding: 2px 5px; color:black;">Дата начала</div>
+	<input id="day_start" style="width: 250px; padding: 2px 5px; border: 1px solid rgb(206, 202, 202);" type="date"/>
+	<div style="width: 250px; padding: 2px 5px; color:black;">Дата завершения</div>
+	<input id="day_end" style="width: 250px; padding: 2px 5px; border: 1px solid rgb(206, 202, 202);" type="date"/>
+	<div style="width: 250px; padding: 2px 5px; color:black;">Продолжительность (дней)</div>
+	<input id="days_long" style="width: 250px; padding: 2px 5px; border: 1px solid rgb(206, 202, 202);" title="если поле заполнено, то дата завершения рассчитывается, а не берется из поля выше"/>
+	<a id="add_btn" class="btn sib" style="background: #15a362; width: 250px;  margin: 10px;" href="#" onclick="createVac()">
+		<div style="cursor: pointer; justify-content: center; align-items: center;">
+			<img style="height: 20px; margin-right: 5px;" src={% static "trello_plus.png" %}>
+		</div>
+		Добавить
+	</a>
+	{% if request.user.get_full_name in bosses %}
+		<a id="can_redact" name="can_redact" class="btn sib" style="display: none; background: #15a362; width: 250px;  margin: 10px;" href="#" onclick="confirmVac(this)">Подтвердить</a>
+	{% else %}
+		<a id="mulaj" name="can_redact" style="display: none;" href="#"></a>
+	{% endif %}
+	<a id="vac_delete" class="btn sib" style="display: none; background: #15a362; width: 250px;  margin: 10px;" href="#" onclick="deleteVac(this)">Удалить</a>
+	<a id="hide_vac_idid" style="display: none; " href="#">vac_id</a>	
+</div>
+<script>
+	// Используем уже существующую функцию для получения параметров
+	function generateCalendarFromURL() {
+		const filters = getURLParameters();
+
+		// Проверяем наличие параметра года
+		let selectedYear = filters.year ? parseInt(filters.year) : 2024;
+
+		// Генерируем календарь для указанного или текущего года
+		generateCalendar(selectedYear);
+	}
+	
+	// Функция для определения, является ли год високосным
+	function isLeapYear(year) {
+		return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+	}
+
+	// Функция для получения первого дня недели года
+	function getFirstWeekday(year) {
+		const firstDay = new Date(year, 0, 1);
+		return firstDay.getDay();
+	}
+
+	function generateMonths(year) {
+		const months = [
+			{ name: 'январь', days: 31 },
+			{ name: 'февраль', days: isLeapYear(year) ? 29 : 28 },
+			{ name: 'март', days: 31 },
+			{ name: 'апрель', days: 30 },
+			{ name: 'май', days: 31 },
+			{ name: 'июнь', days: 30 },
+			{ name: 'июль', days: 31 },
+			{ name: 'август', days: 31 },
+			{ name: 'сентябрь', days: 30 },
+			{ name: 'октябрь', days: 31 },
+			{ name: 'ноябрь', days: 30 },
+			{ name: 'декабрь', days: 31 }
+		];
+		return months;
+	}
+
+	function generateCalendar(year) {
+		const months = generateMonths(year);
+		const weekdays = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
+		let currentWeekday = getFirstWeekday(year);
+		const totalDays = months.reduce((sum, month) => sum + month.days, 0);
+
+		const monthsContainer = document.getElementById('months');
+		const daysContainer = document.getElementById('days');
+		const weekdaysContainer = document.getElementById('weekdays');
+		const infoRow = document.getElementById('info-row');
+
+		monthsContainer.innerHTML = '';
+		daysContainer.innerHTML = '';
+		weekdaysContainer.innerHTML = '';
+		infoRow.innerHTML = '';
+
+		infoRow.style.width = `${totalDays * 30}px`;
+
+		const params = getURLParameters();
+		const selectedYear = params ? parseInt(params.year, 10) : null;
+
+		function populateCalendar(monthsContainer, daysContainer, weekdaysContainer, addInfoLines = false) {
+			let localCurrentWeekday = currentWeekday;
+			const today = new Date();
+			const currentYear = today.getFullYear();
+			const currentDayOfYear = getDayOfYear(today);
+
+			months.forEach(month => {
+				const monthName = document.createElement('div');
+				monthName.classList.add('month');
+				monthName.style.width = `${month.days * 30}px`;
+				monthName.innerText = month.name;
+
+				monthsContainer.appendChild(monthName);
+
+				for (let day = 1; day <= month.days; day++) {
+					const dayDiv = document.createElement('div');
+					dayDiv.classList.add('day');
+					dayDiv.innerText = day;
+
+					// Вычисляем порядковый номер дня в году для текущего дня
+					const currentDayInMonth = new Date(currentYear, months.indexOf(month), day);
+					const dayOfYear = getDayOfYear(currentDayInMonth); // Получаем порядковый номер дня в году
+
+					if (dayOfYear === currentDayOfYear && year === today.getFullYear()) {
+						// Добавляем синюю точку
+						const blueDot = document.createElement('div');
+						blueDot.classList.add('blue-dot'); // Добавляем класс вместо стилизации
+
+						dayDiv.style.position = 'relative'; // Устанавливаем относительное позиционирование для dayDiv
+						dayDiv.appendChild(blueDot); // Добавляем точку в ячейку дня
+					}
+
+					daysContainer.appendChild(dayDiv);
+
+					const weekdayDiv = document.createElement('div');
+					weekdayDiv.classList.add('weekday');
+					weekdayDiv.innerText = weekdays[localCurrentWeekday];
+					weekdaysContainer.appendChild(weekdayDiv);
+
+					localCurrentWeekday = (localCurrentWeekday + 1) % 7;
+
+					if (month.name === 'декабрь' && day === 31) {
+						break;
+					}
+				}
+			});
+		}
+
+		// Генерация первого блока календаря
+		populateCalendar(monthsContainer, daysContainer, weekdaysContainer, true);
+
+		// Прокрутка к текущему дню только для текущего года
+		const currentYear = new Date().getFullYear();
+		if (year === currentYear) {
+			scrollToToday();
+		}
+	}
+	
+	// Функция для прокрутки к текущему дню
+	function scrollToToday() {
+		const today = new Date();
+		const dayOfYear = getDayOfYear(today); // Индекс текущего дня в году
+
+		const calendarContainer = document.querySelector('.calendar-container');
+		const dayWidth = 30; // ширина одного дня
+		const containerWidth = calendarContainer.clientWidth; // ширина контейнера
+		const offset = (containerWidth / 2) - (dayWidth / 2); // смещение для центрирования
+
+		const paddingLeft = 14;
+		
+		calendarContainer.scrollTo({
+			left: (dayOfYear - 1) * dayWidth - offset + paddingLeft,
+			behavior: 'smooth'
+		});
+	}
+
+	// Функция для получения порядкового номера дня в году
+	function getDayOfYear(date) {
+		const start = new Date(date.getFullYear(), 0, 0);
+		const diff = date - start + (start.getTimezoneOffset() - date.getTimezoneOffset()) * 60 * 1000;
+		const oneDay = 1000 * 60 * 60 * 24;
+		return Math.floor(diff / oneDay);
+	}
+
+	function isValidDate(startDate, endDate) {
+		const start = new Date(startDate);
+		const end = new Date(endDate);
+		return start <= end;
+	}
+
+	function formatDateString(dateString) {
+		const [day, monthName, year] = dateString.split(' ');
+		const month = {
+			'января': '01',
+			'февраля': '02',
+			'марта': '03',
+			'апреля': '04',
+			'мая': '05',
+			'июня': '06',
+			'июля': '07',
+			'августа': '08',
+			'сентября': '09',
+			'октября': '10',
+			'ноября': '11',
+			'декабря': '12'
+		}[monthName];
+
+		return `${year}-${month}-${day}`;
+	}
+
+	function drawVacationRects() {
+		const originalInfoRow = document.getElementById('info-row'); 
+		const originalMiddleSection = document.querySelector('.middle-section');
+		const originalTopSection = document.querySelector('.top-section'); 
+		const originalMonths = document.getElementById('months'); 
+		const originalDays = document.getElementById('days');
+		const originalWeekdays = document.getElementById('weekdays');
+
+		// Скрываем оригинальные элементы, чтобы использовать их как шаблоны
+		originalInfoRow.style.display = 'none';
+		originalMiddleSection.style.display = 'none';
+
+		const vacationCells = document.querySelectorAll('.vacation-cell');
+
+		if (vacationCells.length === 0) return;
+
+		const dayWidth = 30;
+
+		// Получаем выбранный год из URL
+		const params = getURLParameters();
+		const selectedYear = params ? parseInt(params.year, 10) : null;
+
+		if (!selectedYear) {
+			alert("Не удалось получить выбранный год из URL");
+			return;
+		}
+
+		const today = new Date();
+		const todayDayOfYear = getDayOfYear(today);   
+		const daysInYear = isLeapYear(selectedYear) ? 366 : 365; // Используем selectedYear для расчета дней в году
+
+		// Создаем элемент для тултипа
+		const tooltip = document.createElement('div');
+		tooltip.style.position = 'absolute';
+		tooltip.style.backgroundColor = '#fff';
+		tooltip.style.color = '#000';
+		tooltip.style.border = '1px solid #ccc';
+		tooltip.style.borderRadius = '5px';
+		tooltip.style.fontSize = '19px';
+		tooltip.style.visibility = 'hidden';
+		tooltip.style.zIndex = '400';
+		tooltip.style.lineHeight = '1.6';
+		tooltip.style.padding = '15px';
+		tooltip.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+		document.body.appendChild(tooltip);
+		
+		vacationCells.forEach((cell) => {
+			const employeeName = cell.getAttribute('data-employee-name');
+			const startDates = cell.getAttribute('data-start-date').split(', ');
+			const endDates = cell.getAttribute('data-end-date').split(', ');
+
+			const colorSquare = cell.querySelector('div[style*="background"]');
+			const color = colorSquare ? colorSquare.style.backgroundColor : 'white';
+
+			// Клонируем и добавляем middle-section для сотрудника
+			const newMiddleSection = originalMiddleSection.cloneNode(true);
+			newMiddleSection.style.display = 'flex';
+			newMiddleSection.innerHTML = '';  // Очищаем содержимое клона
+
+			const nameElement = document.createElement('div');
+			nameElement.innerText = employeeName;
+			nameElement.classList.add('name-element');
+			newMiddleSection.appendChild(nameElement);
+
+			originalMiddleSection.parentNode.appendChild(newMiddleSection);
+
+			// Клонируем и добавляем info-row для сотрудника
+			const newInfoRow = originalInfoRow.cloneNode(true);
+			newInfoRow.style.display = 'flex';
+			newInfoRow.innerHTML = '';
+
+			startDates.forEach((startDate, index) => {
+				const endDate = endDates[index];
+				const startFormatted = formatDateString(startDate);
+				const endFormatted = formatDateString(endDate);
+
+				if (isValidDate(startFormatted, endFormatted)) {
+					const start = new Date(startFormatted);
+					const end = new Date(endFormatted);
+					const startDayOfYear = getDayOfYear(start);
+					const endDayOfYear = getDayOfYear(end);
+
+					if (startDayOfYear > 0 && endDayOfYear > startDayOfYear) {
+						const rect = document.createElement('div');
+						rect.classList.add('vacation-rect');
+						rect.style.position = 'absolute';
+						rect.style.height = '66px';
+						rect.style.width = `${(endDayOfYear - startDayOfYear + 1) * dayWidth - 4}px`;
+						rect.style.left = `${(startDayOfYear - 1) * dayWidth + 2}px`;
+						rect.style.top = '0';
+						rect.style.backgroundColor = color;
+
+						const nameInRect = document.createElement('div');
+						nameInRect.innerText = employeeName;
+						nameInRect.classList.add('vacation-text');
+						rect.appendChild(nameInRect);
+
+						// Создаем затемняющий слой
+						const darkOverlay = document.createElement('div');
+						darkOverlay.style.position = 'absolute';
+						darkOverlay.style.top = '0';
+						darkOverlay.style.left = '0';
+						darkOverlay.style.height = '100%';
+						darkOverlay.style.width = '100%';
+						darkOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.1)'; // Полупрозрачный черный цвет
+						darkOverlay.style.opacity = '0'; // Скрываем затемняющий слой
+						darkOverlay.style.transition = 'opacity 0.2s ease'; // Плавный переход
+
+						// Добавляем затемняющий слой в прямоугольник
+						rect.appendChild(darkOverlay);
+
+						// Добавляем эффект затемнения при наведении
+						rect.addEventListener('mouseenter', () => {
+							darkOverlay.style.opacity = '1'; // Показать затемняющий слой
+							rect.style.cursor = 'pointer'; // Меняем курсор
+						});
+
+						// Возвращаем цвет и курсор при уходе курсора
+						rect.addEventListener('mouseleave', () => {
+							darkOverlay.style.opacity = '0'; // Скрыть затемняющий слой
+							rect.style.cursor = 'ew-resize'; // Возвращаем оригинальный курсор
+						});						
+
+						let tooltipTimeout;
+
+						// Добавляем обработчик событий для показа тултипа
+						rect.addEventListener('mouseenter', () => {
+							// Создаем новый элемент для тултипа, чтобы можно было иметь несколько
+							const newTooltip = tooltip.cloneNode(true);
+							newTooltip.style.visibility = 'visible';
+
+							// Формируем HTML-разметку тултипа
+							newTooltip.innerHTML = `
+								<div class="tooltip-content">
+									<div style="text-align: center;">
+										<strong>${employeeName}</strong>
+									</div>
+									<div style="border-bottom: 2px solid #ccc; width: 100%; text-align: center;"></div>
+									${formatDateWithoutYear(start)} - ${formatDateWithoutYear(end)}
+									<div style="margin-bottom: 2px; margin-left: 1px;">
+										<a href="#" 
+										style="text-decoration: underline; color: #808000" 
+										onclick="showEditAlert(event)">
+											редактировать
+										</a>
+									</div>
+								</div>
+								<div class="tooltip-arrow"></div>
+							`;
+
+							// Добавляем новый тултип в документ
+							document.body.appendChild(newTooltip);
+
+							// Получаем размеры и положение прямоугольника
+							const rectBounds = rect.getBoundingClientRect();
+
+							// Используем requestAnimationFrame для получения размеров тултипа
+							requestAnimationFrame(() => {
+								const tooltipHeight = newTooltip.offsetHeight;
+								const tooltipWidth = newTooltip.offsetWidth;
+
+								// Устанавливаем положение тултипа
+								const offset = 10; // Отступ между тултипом и прямоугольником
+								newTooltip.style.top = `${rectBounds.top - tooltipHeight - offset}px`; // Высчитываем позицию по Y
+								newTooltip.style.left = `${rectBounds.left + (rectBounds.width - tooltipWidth) / 2}px`; // Центрируем по X
+
+								// Убираем тултип с задержкой, если курсор не над тултипом
+								const handleMouseLeave = () => {
+									tooltipTimeout = setTimeout(() => {
+										if (!newTooltip.matches(':hover')) {
+											newTooltip.style.visibility = 'hidden';
+											document.body.removeChild(newTooltip); // Удаляем тултип из документа
+										}
+									}, 600); // Установка задержки на 600 мс перед скрытием тултипа
+								};
+
+								rect.addEventListener('mouseleave', handleMouseLeave);
+
+								// Добавляем обработчик события для скрытия тултипа при уходе курсора с него
+								newTooltip.addEventListener('mouseleave', () => {
+									clearTimeout(tooltipTimeout); // Убираем задержку, если курсор над тултипом
+									tooltipTimeout = setTimeout(() => {
+										newTooltip.style.visibility = 'hidden';
+										document.body.removeChild(newTooltip); // Удаляем тултип из документа
+									}, 600); // Установка задержки на 600 мс перед скрытием тултипа
+								});
+							});
+						});
+						newInfoRow.appendChild(rect);
+					}
+				}
+			});
+
+			for (let day = 1; day < daysInYear; day++) {
+				const dashedLine = document.createElement('div');
+				dashedLine.classList.add('dashed-line');
+				dashedLine.style.left = `${day * dayWidth - 1}px`; 
+				dashedLine.style.top = '0'; 
+				newInfoRow.appendChild(dashedLine); 
+			}
+
+			if (selectedYear === today.getFullYear()) {
+				const blueDashedLine = document.createElement('div');
+				blueDashedLine.classList.add('blue-dashed-line');
+				blueDashedLine.style.left = `${todayDayOfYear * dayWidth - 15.65}px`;
+				blueDashedLine.style.top = '0';
+				newInfoRow.appendChild(blueDashedLine);
+			}
+
+			originalInfoRow.parentNode.appendChild(newInfoRow);
+		});
+	}
+
+	function showEditAlert(event) {
+		event.preventDefault(); // предотвращаем переход по ссылке
+		alert('Возможность редактирования отпуска скоро будет активна!'); // Ваше сообщение
+	}
+	
+	// Функция для форматирования даты без года
+	function formatDateWithoutYear(date) {
+		const options = { day: 'numeric', month: 'long' }; // Формат с днём и месяцем
+		return new Date(date).toLocaleDateString('ru-RU', options); // Локализованный формат на русском
+	}
+
+	// Генерация календаря при загрузке страницы с учётом года из URL
+	document.addEventListener('DOMContentLoaded', () => {
+		generateCalendarFromURL(); // Генерируем календарь на основе URL
+		drawVacationRects(); // Рисуем прямоугольники для отпусков
+		addNewTopSectionAndRows();
+	});
+
+	function addNewTopSectionAndRows() {
+		// Найдем последний блок middle-section
+		const lastMiddleSection = document.querySelector('.calendar-container .middle-section:last-of-type');
+
+		// Найдем и клонируем блок top-section
+		const topSection = document.querySelector('.top-section');
+		const newTopSection = topSection.cloneNode(true);
+		newTopSection.style.borderBottom = 'none';
+
+		// Вставляем клонированный блок под последний middle-section
+		lastMiddleSection.insertAdjacentElement('afterend', newTopSection);
+
+		// Найдем последний блок info-row
+		const lastInfoRow = document.querySelector('.calendar-container .info-row:last-of-type');
+
+		// Клонируем строки для месяцев, дней и дней недели
+		const originalMonths = document.getElementById('months');
+		const originalDays = document.getElementById('days');
+		const originalWeekdays = document.getElementById('weekdays');
+
+		const newMonthsRow = originalMonths.cloneNode(true); // Копируем строки для месяцев
+		const newDaysRow = originalDays.cloneNode(true); // Копируем строки для дней
+		const newWeekdaysRow = originalWeekdays.cloneNode(true); // Копируем строки для дней недели
+
+		// Присваиваем уникальные ID новым строкам
+		newMonthsRow.id = 'new-months';
+		newDaysRow.id = 'new-days';
+		newWeekdaysRow.id = 'new-weekdays';
+
+		// Вставляем новые строки под последним info-row
+		lastInfoRow.insertAdjacentElement('afterend', newMonthsRow);
+		newMonthsRow.insertAdjacentElement('afterend', newDaysRow);
+		newDaysRow.insertAdjacentElement('afterend', newWeekdaysRow);
+
+		// Изменение положения синей точки в клонированных строках
+		const blueDots = newDaysRow.querySelectorAll('.blue-dot'); // Найти синюю точку в новом ряду
+
+		blueDots.forEach(dot => {
+			dot.style.bottom = '65px'; // Измените значение по оси Y по вашему усмотрению
+		});
+	}
+
+	document.addEventListener('DOMContentLoaded', () => {
+		const calendarContainer = document.querySelector('.calendar-container');
+		const tooltipElements = document.querySelectorAll('.vacation-rect'); // Элементы, для которых показываются тултипы
+		let isDragging = false;
+		let startX;
+		let scrollLeft;
+
+		// Функция для отключения тултипов
+		function disableTooltips() {
+			tooltipElements.forEach(element => {
+				element.style.pointerEvents = 'none'; // Отключаем наведение и тултипы
+			});
+		}
+
+		// Функция для включения тултипов
+		function enableTooltips() {
+			tooltipElements.forEach(element => {
+				element.style.pointerEvents = ''; // Включаем наведение и тултипы обратно
+			});
+		}
+
+		// Начало перетаскивания
+		calendarContainer.addEventListener('mousedown', (e) => {
+			isDragging = true;
+			startX = e.pageX - calendarContainer.offsetLeft;
+			scrollLeft = calendarContainer.scrollLeft;
+			disableTooltips(); // Отключаем тултипы
+		});
+
+		// Перетаскивание
+		calendarContainer.addEventListener('mousemove', (e) => {
+			if (!isDragging) return; // Если не перетаскиваем, выходим
+			e.preventDefault(); // Предотвращаем выделение текста
+			const x = e.pageX - calendarContainer.offsetLeft;
+			const walk = (x - startX) * 2; // Увеличиваем скорость перемещения (по желанию)
+			calendarContainer.scrollLeft = scrollLeft - walk;
+		});
+
+		// Окончание перетаскивания
+		calendarContainer.addEventListener('mouseup', () => {
+			isDragging = false;
+			enableTooltips(); // Включаем тултипы обратно
+		});
+
+		// Убираем состояние перетаскивания при выходе мыши
+		calendarContainer.addEventListener('mouseleave', () => {
+			isDragging = false;
+			enableTooltips(); // Включаем тултипы обратно
+		});
+	});
+
+	if (window.history.replaceState) {
+		window.history.replaceState(null, null, window.location.href);
+	}
+	let data = JSON.parse("{{json_data|escapejs}}");
+	let vacs = JSON.parse("{{json_data_vacs|escapejs}}");
+	
+	document.addEventListener("DOMContentLoaded", function() {
+		let today = new Date();
+		let day = today.getDate();
+		let monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+		let month = monthNames[today.getMonth()];
+		let week = Math.ceil(day / 7);
+
+		let todayObj = {
+			id: month + "_" + week + "_" + day
+		};
+
+		if (data && data[month] && data[month][week] && data[month][week][day]) {
+			showCrossData(todayObj); // Вызов функции с параметрами сегодняшней даты
+		}
+	});
+
+	let canRedact = document.getElementById('can_redact');
+	let vacDelete = document.getElementById('vac_delete');
+	let hide_vac_idid = document.getElementById('hide_vac_idid');
+	let add_btn = document.getElementById('add_btn');
+
+	function openFormCreateVac(obj) {
+		
+		closeForm();
+		
+		let form = document.getElementById('add_new_vac');
+		form.style.display = "flex";
+
+		form.style.position = "absolute"; // или "fixed", если нужно
+		form.style.top = "135px"; // Установите нужное значение
+		form.style.left = "954px"; // Установите нужное значение
+
+		form.style.zIndex = "500";
+
+		add_btn.childNodes[1].style.display = "flex";
+		add_btn.childNodes[2].textContent = "Добавить";
+		add_btn.onclick = createVac;
+
+		if (obj.id.split('_')[0] == "creat") {
+			document.getElementById('filtr_user').value = obj.id.split('_')[2];
+		}
+	}
+	
+	function openFormEditVac(obj) {
+		closeForm();
+		
+		let months = {'Янв': '01', 'Фев': '02', 'Мар': '03', 'Апр': '04', 'Май': '05', 'Июн': '06',
+		'Июл': '07', 'Авг': '08', 'Сен': '09', 'Окт': '10', 'Ноя': '11', 'Дек': '12',};
+		let form = document.getElementById('add_new_vac');
+		let vac = vacs[obj.id.split('_')[1]]
+
+
+		hide_vac_idid.textContent = obj.id.split('_')[1];
+		
+
+		add_btn.childNodes[1].style.display = "none";
+		add_btn.childNodes[2].textContent = "Редактировать";
+		add_btn.onclick = redactVac;
+		
+
+		document.getElementById('filtr_user').value = obj.id.split('_')[0];
+		document.getElementById('day_start').value = vac[0];
+		document.getElementById('day_end').value = vac[1];
+		document.getElementById('days_long').value = vac[2];
+		
+		let user_id = 0;
+		let options = document.getElementsByTagName('option');
+		for (let i = 0; i < options.length; i++) {
+			if (options[i].textContent == obj.id.split('_')[0]) {
+				user_id = options[i].id;
+			}
+		}
+		form.style.height = "500px auto";
+		
+		vacDelete.style.display = "flex";
+		vacDelete.id = 'del_' + obj.id.split('_')[1];
+		let canRedact = document.getElementsByName('can_redact')[0];
+		
+
+		if (vac[3]) {
+			if (canRedact.id != "mulaj"){
+				canRedact.textContent = "Подтвердить";
+			}	
+		}else {
+			if (canRedact.id != "mulaj"){
+				canRedact.textContent = "Отклонить";
+			}
+			
+			vacDelete.style.display = "none";
+		}
+		if (canRedact.id != "mulaj"){
+			canRedact.style.display = "flex";
+		}
+		
+		form.style.display = "flex";
+		//canRedact.id = 'red_' + obj.id.split('_')[1];
+	}
+	
+	function closeForm() {
+		let form = document.getElementById('add_new_vac');
+		form.style.height = "360px auto";
+		
+		document.getElementById('filtr_user').value = '';
+		document.getElementById('day_start').value = '';
+		document.getElementById('day_end').value = '';
+		document.getElementById('days_long').value = '';
+		
+
+		vacDelete.style.display = "none";
+
+		let canRedact = document.getElementsByName('can_redact')[0];
+		canRedact.style.display = "none";
+		form.style.display = "none";
+		
+	}
+	function deleteVac(obj) {
+		let url = "{% url 'vacation_delete' otd year 99 %}";
+		//alert(url);
+		let arrayFromUrl = url.split('/');
+		arrayFromUrl[6] = obj.id.split('_')[1];
+		let new_url = arrayFromUrl.join("/");
+		//alert(new_url);
+		location.href=new_url;	
+	}
+	function redactVac() {
+		let filtr_user = document.getElementById('filtr_user').value;
+		let options = document.getElementsByTagName('option');
+		let user_id = 0;
+		for (let i = 0; i < options.length; i++) {
+			if (options[i].textContent == filtr_user) {
+				user_id = options[i].id;
+			}
+		}
+		let day_start = document.getElementById('day_start').value;
+		let day_end = document.getElementById('day_end').value;
+		let days_long = document.getElementById('days_long').value;
+		let months = {'января': '01', 'февраля': '02', 'марта': '03', 'апреля': '04', 'мая': '05', 'июня': '06',
+		'июля': '07', 'августа': '08', 'сентября': '09', 'октября': '10', 'ноября': '11', 'декабря': '12',};
+
+
+		let day = day_start.split('-')[2];
+		let month = day_start.split('-')[1];
+		let year = day_start.split('-')[0];
+
+		let day_e = day_end.split('-')[2];
+		let month_e = day_end.split('-')[1];
+		let year_e = day_end.split('-')[0];
+		let vac_id = hide_vac_idid.textContent;
+		let url = "{% url 'vac_edit' otd 99 99 year 99 99 99 99 99 %}";
+		let arrayFromUrl = url.split('/');
+		arrayFromUrl[5] = day;
+		arrayFromUrl[6] = month;
+		if (!isNaN(days_long) & days_long != '') {
+			arrayFromUrl[8] = days_long;
+		} else {
+			arrayFromUrl[8] = '0';
+		}
+		arrayFromUrl[9] = day_e;
+		arrayFromUrl[10] = month_e;
+		arrayFromUrl[11] = user_id;
+		arrayFromUrl[12] = vac_id;
+		let new_url = arrayFromUrl.join("/");
+
+		if (day_start == '') {
+			alert('Введите дату начала отпуска!')
+		} else{
+			if (day_end == '') {
+				alert('Введите дату окончания отпуска!')
+			} else {
+				location.href=new_url;
+			}
+			
+		}
+	}
+	function confirmVac(obj) {
+
+		let url = "{% url 'vacation_confirm' year otd 99 %}";
+		let arrayFromUrl = url.split('/');
+		arrayFromUrl[6] = hide_vac_idid.textContent;
+		let new_url = arrayFromUrl.join("/");
+		location.href=new_url;	
+
+	}
+	function createVac() {
+		let filtr_user = document.getElementById('filtr_user').value;
+		let options = document.getElementsByTagName('option');
+		let user_id = 0;
+		for (let i = 0; i < options.length; i++) {
+			if (options[i].textContent == filtr_user) {
+				user_id = options[i].id;
+			}
+		}
+		let day_start = document.getElementById('day_start').value;
+		let day_end = document.getElementById('day_end').value;
+		let days_long = document.getElementById('days_long').value;
+		
+		let months = {'января': '01', 'февраля': '02', 'марта': '03', 'апреля': '04', 'мая': '05', 'июня': '06',
+		'июля': '07', 'августа': '08', 'сентября': '09', 'октября': '10', 'ноября': '11', 'декабря': '12',};
+
+
+		let day = day_start.split('-')[2];
+		let month = day_start.split('-')[1];
+		let year = day_start.split('-')[0];
+
+		let day_e = day_end.split('-')[2];
+		let month_e = day_end.split('-')[1];
+		let year_e = day_end.split('-')[0];
+
+		let url = "{% url 'add_new_vac_dni' otd 99 99 year 99 99 99 99 %}";
+		let arrayFromUrl = url.split('/');
+		arrayFromUrl[5] = day;
+		arrayFromUrl[6] = month;
+		if (!isNaN(days_long) & days_long != '') {
+			arrayFromUrl[8] = days_long;
+		} else {
+			arrayFromUrl[8] = '0';
+		}
+		arrayFromUrl[9] = day_e;
+		arrayFromUrl[10] = month_e;
+		arrayFromUrl[11] = user_id;
+		let new_url = arrayFromUrl.join("/");
+		if (user_id == 0) {
+			alert('Выберите пользователя!')	
+		} else {
+			if (day_start == '') {
+				alert('Введите дату начала отпуска!')
+			} else{
+				if (day_end == '') {
+					alert('Введите дату окончания отпуска!')
+				} else {
+					location.href=new_url;
+				}					
+			}
+		}						
+	}
+	function filtrByUser(obj) {
+		let days = document.getElementsByName('day');
+		for (let i = 0; i < days.length; i++) {
+			let month = days[i].id.split('_')[0];
+			let week = days[i].id.split('_')[1];
+			let day = days[i].id.split('_')[2];
+			if (Object.entries(data[month][week][day]['data']).length > 1) {
+				for (const [k, v] of Object.entries(data[month][week][day]['data'])) {
+					if (k != obj.textContent) {
+						if (day == 5 | day == 6) {
+							days[i].childNodes[1].style.background = 'rgb(219, 219, 219)';
+						} else {
+							days[i].childNodes[1].style.background = 'transparent';
+						}
+						days[i].childNodes[1].style.color = '#808080';
+						
+					} else {
+						days[i].childNodes[1].style.background = 'linear-gradient(135deg, #df691a 50%, #4e5d6c 50%, #4e5d6c 100%)';
+						days[i].childNodes[1].style.color = 'white';
+						break;
+					}
+				}
+			} else {
+				for (const [k, v] of Object.entries(data[month][week][day]['data'])) {
+					if (k != obj.textContent) {
+						if (day == 5 | day == 6) {
+							days[i].childNodes[1].style.background = 'rgb(219, 219, 219)';
+						} else {
+							days[i].childNodes[1].style.background = 'transparent';
+						}							
+						days[i].childNodes[1].style.color = '#808080';							
+					} else {
+						days[i].childNodes[1].style.background = obj.parentElement.childNodes[1].style.background;
+						break;
+					}
+				}
+			}				
+		}			
+	}		
+</script>
+{% endblock %}
