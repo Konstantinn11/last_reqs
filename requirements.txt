@@ -30,4 +30,3 @@ pillow
 winapi
 transliterate
 openpyxl
-djangorestframework==3.9.0

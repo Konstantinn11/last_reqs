@@ -384,10 +384,6 @@
 
 {% block content %}
 <style>
-	#no_vacation_message {
-		display: block;
-	}
-
 	#tooltip {
 	position: absolute;
     background-color: rgba(0, 0, 0, 0.8);  /* Полупрозрачный черный фон */
@@ -473,7 +469,7 @@
 		{% endfor %}
 	</table>
 	<div style="border: 1px solid rgb(187, 185, 185); padding: 5px;">
-		<div id="no_vacation_message">В данный момент нет сотрудников в отпуске.</div>
+		<div id="vacation-message">В данный момент нет сотрудников в отпуске.</div>
 		<div id="info" style="margin-top: 20px; border: 1px solid rgb(187, 185, 185);"></div>
 	</div>
 </div>
@@ -519,85 +515,83 @@
 	let data = JSON.parse("{{json_data|escapejs}}");
 	let vacs = JSON.parse("{{json_data_vacs|escapejs}}");
 	
-	document.addEventListener("DOMContentLoaded", function() {
-	
-	let today = new Date();
-	let day = today.getDate();
-	let monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
-	let month = monthNames[today.getMonth()];
-	let week = Math.ceil(day / 7);
+	function showCrossData(obj) {
+		console.log(`Вызываем showCrossData: ${obj.id}`);
+		let month = obj.id.split('_')[0].toString().trim();
+		let week = obj.id.split('_')[1].toString().trim();
+		let day = Number(obj.id.split('_')[2].toString().trim());			
+		let info = document.getElementById('info');
+		let messageDiv = info.previousElementSibling;
 
-	let todayObj = {
-		id: month + "_" + week + "_" + day
-	};
-
-	if (data && data[month] && data[month][week] && data[month][week][day]) {
-		showCrossData(todayObj);
-	} else {
-		console.error("Данные для текущей даты не найдены!");
-	}
-});
-
-function showCrossData(obj) {
-	let month = obj.id.split('_')[0].toString().trim();
-	let week = obj.id.split('_')[1].toString().trim();
-	let day = Number(obj.id.split('_')[2].toString().trim());
-	let info = document.getElementById('info');
-	let noVacationMessage = document.getElementById('no_vacation_message');
-
-	let month_for_lbl = (month == "Март" || month == "Август")
-		? month.substring(0, month.length) + 'а'
-		: month.substring(0, month.length - 1) + 'я';
-
-	// Проверьте наличие данных перед доступом к ним
-	if (data[month] && data[month][week] && data[month][week][day]) {
-		let innerHtml = data[month][week][day]["name"] + ' ' + month_for_lbl + ' {{year}}';
+		if (month == "Март" || month == "Август") {
+			month_for_lbl = month.substring(0, month.length) + 'а';
+		} else {
+			month_for_lbl = month.substring(0, month.length - 1) + 'я';
+		}		
+		var innerHtml = data[month][week][day]["name"] + ' ' + month_for_lbl + ' {{year}}';
 
 		if (Object.keys(data[month][week][day]['date']).length > 0) {
-			noVacationMessage.textContent = 'В данный момент есть сотрудники в отпуске:';
-			noVacationMessage.style.display = 'block';
-
-			let monthNames = [
-				"Января", "Февраля", "Марта", "Апреля", "Мая", "Июня",
-				"Июля", "Августа", "Сентября", "Октября", "Ноября", "Декабря"
-			];
-
+			// Если есть данные о отпусках
 			for (const [k, v] of Object.entries(data[month][week][day]['date'])) {
 				let first_date = v['date'].split(' - ')[0];
+				let dayMonthYear_day = first_date.split('-')[2];
+				let dayMonthYear_month = first_date.split('-')[1];
+
 				let second_date = v['date'].split(' - ')[1];
+				let dayMonthYear_day2 = second_date.split('-')[2];
+				let dayMonthYear_month2 = second_date.split('-')[1];
 
-				// Форматируем первую дату
-				let first_date_parts = first_date.split('-');
-				let first_day = first_date_parts[2];
-				let first_month = monthNames[Number(first_date_parts[1]) - 1]; // Индексация с 0
-				first_date = `${first_day} ${first_month}`;
+				// Форматируем даты в нужный вид
+				let period = `${dayMonthYear_day} ${getMonthName(dayMonthYear_month)} - ${dayMonthYear_day2} ${getMonthName(dayMonthYear_month2)}`;
 
-				// Форматируем вторую дату
-				let second_date_parts = second_date.split('-');
-				let second_day = second_date_parts[2];
-				let second_month = monthNames[Number(second_date_parts[1]) - 1]; // Индексация с 0
-				second_date = `${second_day} ${second_month}`;
-
-				let period = first_date + ' - ' + second_date;
-
-				let formattedName = k.replace(/_/g, ' '); // Заменяем подчеркивания на пробелы
+				// Заменяем подчеркивания на пробелы
+				let formattedName = k.replace(/_/g, ' '); 
 				innerHtml += (`<div style="display: flex; flex-direction: row; justify-content: center; align-items: center;">
 					<div style="width: 15px; height: 15px; background: ${v['color']}; border: 1px solid black; margin-right: 6px;"></div><div>${formattedName}</div></div>`);
 				innerHtml += `<div>${period}</div>`;
-				info.innerHTML = innerHtml;
 			}
+			messageDiv.innerText = "В данный момент есть сотрудники в отпуске:";
+			info.style.display = "block";
 		} else {
-			noVacationMessage.textContent = 'В данный момент нет сотрудников в отпуске';
-			noVacationMessage.style.display = 'block';
 			info.innerHTML = '';
+			info.style.display = "none";
+			messageDiv.innerText = "В данный момент нет сотрудников в отпуске.";
 		}
-	} else {
-		console.error("Данные для указанной даты не найдены!");
-		noVacationMessage.textContent = 'Данные для указанной даты не найдены';
-		noVacationMessage.style.display = 'block';
-		info.innerHTML = '';
+		info.innerHTML = innerHtml;
+		console.log("Внутренний HTML:", innerHtml);
 	}
-}
+
+	// Функция для получения названия месяца по номеру
+	function getMonthName(monthNumber) {
+		const monthNames = [
+			"", // Пустая строка для нуля
+			"января", "февраля", "марта", "апреля", "мая", "июня", 
+			"июля", "августа", "сентября", "октября", "ноября", "декабря"
+		];
+		return monthNames[parseInt(monthNumber)];
+	}
+
+	document.addEventListener("DOMContentLoaded", function() {
+		const currentDate = new Date();
+		const currentDay = currentDate.getDate();
+		const currentMonth = currentDate.getMonth();
+		const currentYear = currentDate.getFullYear();
+
+		const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+		const firstWeekday = firstDayOfMonth.getDay() === 0 ? 6 : firstDayOfMonth.getDay() - 1;
+		const currentWeekday = currentDate.getDay() === 0 ? 6 : currentDate.getDay() - 1;
+		const weekOffset = Math.floor((currentDay + firstWeekday - 1) / 7) + 1;
+
+		const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", 
+							"Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+		const month = monthNames[currentMonth];
+		const currentId = `${month}_${weekOffset}_${currentWeekday}`;
+
+		const currentDayElement = document.getElementById(currentId);
+		if (currentDayElement) {
+			showCrossData(currentDayElement);
+		}
+	});
 
 	let tooltipTimeout; // Переменная для хранения таймаута
 
@@ -647,17 +641,17 @@ function showCrossData(obj) {
 		tooltip.style.display = 'block'; // Показываем тултип только если есть данные
 		tooltip.style.left = event.pageX + 'px';
 		tooltip.style.top = (event.pageY - tooltip.offsetHeight - 12) + 'px'; // Смещение на 10px для отступа
-	} else {
-		tooltip.style.display = 'none'; // Полностью скрываем тултип при отсутствии данных
+		} else {
+			tooltip.style.display = 'none'; // Полностью скрываем тултип при отсутствии данных
+			tooltip.innerHTML = ''; // Очищаем содержимое
+		}
+	}
+
+	function hideTooltip() {
+		let tooltip = document.getElementById('tooltip');
+		tooltip.style.display = 'none'; // Скрываем тултип
 		tooltip.innerHTML = ''; // Очищаем содержимое
 	}
-}
-
-function hideTooltip() {
-	let tooltip = document.getElementById('tooltip');
-	tooltip.style.display = 'none'; // Скрываем тултип
-	tooltip.innerHTML = ''; // Очищаем содержимое
-}
 
 	let canRedact = document.getElementById('can_redact');
 	let vacDelete = document.getElementById('vac_delete');
@@ -914,4 +908,4 @@ function hideTooltip() {
 		}			
 	}		
 </script>
-{% endblock %} 
+{% endblock %}

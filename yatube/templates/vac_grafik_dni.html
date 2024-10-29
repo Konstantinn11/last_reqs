@@ -1169,22 +1169,6 @@
 	}
 	let data = JSON.parse("{{json_data|escapejs}}");
 	let vacs = JSON.parse("{{json_data_vacs|escapejs}}");
-	
-	document.addEventListener("DOMContentLoaded", function() {
-		let today = new Date();
-		let day = today.getDate();
-		let monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
-		let month = monthNames[today.getMonth()];
-		let week = Math.ceil(day / 7);
-
-		let todayObj = {
-			id: month + "_" + week + "_" + day
-		};
-
-		if (data && data[month] && data[month][week] && data[month][week][day]) {
-			showCrossData(todayObj); // Вызов функции с параметрами сегодняшней даты
-		}
-	});
 
 	let canRedact = document.getElementById('can_redact');
 	let vacDelete = document.getElementById('vac_delete');

@@ -1858,37 +1858,3 @@ def vac_2_dni(request, year, otd):
          'vacation_start_dates': vacation_start_dates,
         }
     )
-
-def add_new_vac_dni(request, otd, day_s, month_s, year_s, long: int, day_e, month_e, user_id):
-    if not vac_access_check(request):
-        return render(request, 'no_rights.html',)
-
-    date = dt.datetime.strptime(f'{year_s}-{month_s}-{day_s}', '%Y-%m-%d').date()
-    date_end = dt.datetime.strptime(f'{year_s}-{month_e}-{day_e}', '%Y-%m-%d').date()
-    vacation = Vacation()
-    vacation.user_id = user_id
-    vacation.day_start = date + dt.timedelta(days=1)
-
-    i = 1
-    if long != 0:
-        while i < long:
-            date += dt.timedelta(days=1)
-            i += 1
-            if date in holidays:
-                i -= 1
-
-        vacation.day_end = date + dt.timedelta(days=1)
-        vacation.how_long = long
-    else:
-        while date < date_end:
-            date += dt.timedelta(days=1)
-            i += 1
-            if date in holidays:
-                i -= 1
-
-        vacation.day_end = date_end + dt.timedelta(days=1)
-        vacation.how_long = i
-    vacation.year = year_s
-    vacation.can_redact = True
-    vacation.save()
-    return redirect('vac_2_dni', year_s, otd)
