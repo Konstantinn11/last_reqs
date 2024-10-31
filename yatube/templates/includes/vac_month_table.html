@@ -46,7 +46,7 @@
 {% for kk, val in value.items %}
 <div style="display: flex; flex-direction: row;">
     {% for el in val %}
-    <div onclick="showCrossData(this)" id="{{key}}_{{kk}}_{{val|index_of:el}}"
+    <div onclick="showCalendarPopup(this)" id="{{key}}_{{kk}}_{{val|index_of:el}}"
         onmouseover="startTooltipTimeout(event, '{{ key }}', '{{ kk }}', '{{ val|index_of:el }}', '{{ year }}')" 
         onmouseout="clearTooltipTimeout()" name='day'>
         {% if el.name != '' %}

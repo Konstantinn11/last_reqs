@@ -6,6 +6,8 @@
 {% block header %}
 <script src="{% static 'libs/html2pdf.bundle.min.js' %}"></script>
 <script src="{% static 'libs/xlsx.full.min.js' %}"></script>
+<link rel="stylesheet" href="{% static 'css/sweetalert2.min.css' %}">
+<script src="{% static 'libs/sweetalert2.min.js' %}"></script>
 <div style="display: flex; flex-direction: row; justify-content: left; align-items: center; flex-wrap: nowrap; width: 100%;">
     <a style="color: black; font-weight: bold; font-size: 38px; text-align: left; line-height: 50px; white-space: nowrap;">Календарь отпусков на {{year}}</a>
     <div style="display: flex; flex-direction: row; align-items: center; margin-left: 20px; gap: 20px; flex-grow: 1; justify-content: flex-end;">
@@ -385,15 +387,60 @@
 {% block content %}
 <style>
 	#tooltip {
-	position: absolute;
-    background-color: rgba(0, 0, 0, 0.8);  /* Полупрозрачный черный фон */
-    color: white;  /* Белый цвет текста */
-    padding: 10px;  /* Немного внутреннего отступа */
-    border-radius: 5px;  /* Скругленные углы */
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);  /* Тень для улучшения визуального восприятия */
-    display: none;  /* Скрыт по умолчанию */
-    z-index: 1000;  /* Чтобы тултип был выше других элементов */
-  }
+		position: absolute;
+		background-color: rgba(0, 0, 0, 0.8);  /* Полупрозрачный черный фон */
+		color: white;  /* Белый цвет текста */
+		padding: 10px;  /* Немного внутреннего отступа */
+		border-radius: 5px;  /* Скругленные углы */
+		box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);  /* Тень для улучшения визуального восприятия */
+		display: none;  /* Скрыт по умолчанию */
+		z-index: 1000;  /* Чтобы тултип был выше других элементов */
+	}
+
+	/* Уменьшаем шрифт заголовка */
+	.swal2-title {
+		font-size: 26px; /* Установите желаемый размер шрифта для заголовка */
+		color: #000000;
+	}
+
+	/* Увеличиваем шрифт внутри таблицы */
+	.table {
+		font-size: 19px; /* Установите желаемый размер шрифта для текста внутри таблицы */
+	}
+
+	/* Определяем ключевые кадры для появления и исчезновения */
+	@keyframes slideInTop {
+	from {
+		transform: translateY(-100%);
+		opacity: 0;
+	}
+	to {
+		transform: translateY(0);
+		opacity: 1;
+	}
+	}
+
+	@keyframes slideOutTop {
+	from {
+		transform: translateY(0);
+		opacity: 1;
+	}
+	to {
+		transform: translateY(-100%);
+		opacity: 0;
+	}
+	}
+
+	.custom-popup {
+		width: 920px; /* Задайте необходимую ширину */
+		top: 60px; /* Расстояние от верха страницы */
+		position: fixed; /* Фиксированное положение в верхней части страницы */
+		animation: slideInTop 0.5s ease-out;
+	}
+
+	.custom-popup.swal2-hide {
+	animation: slideOutTop 0.5s ease-in forwards;
+	}
 </style>
 <div style="width: 110%; display: flex; flex-direction: row;">
 	<div style="margin: 5px 20px 5px 0px;">{% include "includes/vac_month_table.html" with key="Январь" value=Январь %}</div>
@@ -592,6 +639,133 @@
 			showCrossData(currentDayElement);
 		}
 	});
+
+	// Функция для получения данных об отделе сотрудника по имени
+	function getEmployeeDepartment(employeeName) {
+		let tableRows = document.querySelectorAll(".vacation-cell");
+
+		for (let row of tableRows) {
+			let name = row.getAttribute("data-employee-name").trim();
+			if (name === employeeName.trim()) {
+				return row.querySelector("th:nth-child(2)").innerText.trim();
+			}
+		}
+		return "Отдел не указан";
+	}
+
+	function showCalendarPopup(obj) {
+		console.log(`Вызываем showCalendarPopup: ${obj.id}`);
+		
+		// Разбиваем идентификатор и находим нужные данные
+		let month = obj.id.split('_')[0].toString().trim();
+		let week = obj.id.split('_')[1].toString().trim();
+		let dayIndex = Number(obj.id.split('_')[2].toString().trim());
+
+		// Извлекаем день по индексу
+		let day = data[month][week][dayIndex]?.name || dayIndex;
+
+		// Форматируем месяц для заголовка
+		let month_for_lbl = (month === "Март" || month === "Август") 
+			? month + 'а' 
+			: month.substring(0, month.length - 1) + 'я';
+
+		// Приводим первую букву месяца к нижнему регистру
+		month_for_lbl = month_for_lbl.charAt(0).toLowerCase() + month_for_lbl.slice(1);
+		
+		const year = "{{year}}";
+		let title = `Отпуска на ${day} ${month_for_lbl} ${year}`;
+
+		// Преобразуем название месяца в числовой формат
+		const monthNumbers = {
+			"Январь": "01", "Февраль": "02", "Март": "03", "Апрель": "04", 
+			"Май": "05", "Июнь": "06", "Июль": "07", "Август": "08", 
+			"Сентябрь": "09", "Октябрь": "10", "Ноябрь": "11", "Декабрь": "12"
+		};
+		let monthNumber = monthNumbers[month] || "00";
+
+		// Добавляем ведущий ноль для дня, если он меньше 10
+		let formattedDay = day < 10 ? `0${day}` : day;
+
+		let formattedDate = `${formattedDay}.${monthNumber}.${year}`;
+		
+		// Подготавливаем данные об отпусках
+		let vacationData = [];
+		if (Object.keys(data[month][week][dayIndex]['date']).length > 0) {
+			for (const [name, info] of Object.entries(data[month][week][dayIndex]['date'])) {
+				let formattedName = name.replace(/_/g, ' ');
+				let period = formatVacationPeriod(info['date']);
+				let department = getEmployeeDepartment(formattedName);
+				vacationData.push({ name: formattedName, period: period, department: department, color: info['color'] });
+			}
+		}
+
+		// Подсчитываем количество сотрудников
+		const employeeCount = vacationData.length;
+
+		// Генерируем содержимое поп-апа
+		let content = '';
+
+		if (vacationData.length > 0) {
+			content += `<table class="table" style="width: 100%;">
+				<thead>
+					<tr>
+						<th style="width: 270px; text-align: left;">Сотрудник</th>
+						<th style="width: 350px; text-align: left;">Отдел</th>
+						<th style="width: 300px; text-align: left;">Период</th>
+					</tr>
+				</thead>
+				<tbody>`;
+			for (let entry of vacationData) {
+				content += `<tr>
+					<td style="text-align: left;">
+						<div style="display: flex; align-items: center;">
+							<div style="width: 15px; height: 15px; background: ${entry.color}; border: 1px solid black; margin-right: 6px;"></div>
+							<div style="color: #15a362; text-decoration: underline;">${entry.name}</div>
+						</div>
+					</td>
+					<td style="text-align: left;">${entry.department}</td>
+					<td style="text-align: left; font-style: italic; text-decoration: underline; color: #15a362;">
+						<a href="#" style="color: inherit; text-decoration: inherit;">${entry.period}</a>
+					</td>
+				</tr>`;
+			}
+			content += `</tbody></table>`;
+		} else {
+			content = `<div style="font-size: 22px; text-align: left;">Не найдено отпусков за <strong>${formattedDate}</strong></div>`;
+		}
+
+		// Генерируем заголовок с количеством сотрудников
+		const employeeCountBadge = `<span style="background-color: #5b99ea; color: white; padding: 4px 8px; border-radius: 4px; margin-left: 10px;">${employeeCount} чел.</span>`;
+    	title += employeeCountBadge; // Добавляем количество сотрудников к заголовку
+
+		// Отображаем SweetAlert2 с поп-апом
+		Swal.fire({
+			title: `<div style="text-align: left;">${title}</div>`,
+			html: content,
+			showCloseButton: true,
+			showConfirmButton: false,
+			customClass: {
+				popup: 'custom-popup'
+			},
+			didClose: () => {
+				document.querySelector('.swal2-popup').classList.add('swal2-hide');
+			}
+		});
+		
+		const closeButton = document.querySelector('.swal2-close');
+		if (closeButton) {
+			closeButton.style.outline = 'none';
+		}
+	}
+
+	// Функция для форматирования периода отпуска
+	function formatVacationPeriod(dateRange) {
+		let [start, end] = dateRange.split(' - ');
+		let [startDay, startMonth] = start.split('-').reverse();
+		let [endDay, endMonth] = end.split('-').reverse();
+
+		return `${startDay} ${getMonthName(startMonth)} - ${endDay} ${getMonthName(endMonth)}`;
+	}
 
 	let tooltipTimeout; // Переменная для хранения таймаута
 
