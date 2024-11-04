@@ -12,6 +12,11 @@
 {% with request.resolver_match.view_name as view_name %}
 <nav class="navbar navbar-expand-md" style="font-weight: bold; background: #E6E6E6;">
 	<div class="navbar-collapse collapse w-100 order-1 order-md-0 dual-collapse2">
+		{% if show_add_leave_button %}
+				<a href="#">
+					<img style="height: 40px; width: 40px; display: flex; align-items: center; justify-content: center; filter: brightness(0) saturate(100%) invert(42%) sepia(76%) saturate(231%) hue-rotate(129deg) brightness(93%) contrast(101%);" src="{% static 'menu.svg' %}">
+				</a>
+		{% endif %}
 		<img style="height: 45px; margin-left: 30px; margin-right: 100px;" src={% static "logo_ya.png" %}>
 		<ul class="navbar-nav mr-auto">
 			{% if page_name %}
@@ -43,14 +48,36 @@
 	</div>
 
 	<div class="navbar-collapse collapse w-100 order-3 dual-collapse2">
-		<ul class="navbar-nav ml-auto">
+		<ul class="navbar-nav ml-auto"> 
 			{% if user.is_authenticated %}
-				<li><a  id="username" class="p-2" style="color:rgb(74, 177, 236);" href="{% url 'user_space' user.id %}">{{ user.username }}</a></li> | 
-				<li><a  class="p-2" style="color: black;" href="{% url 'password_change' %}">Изменить пароль</a></li> | 
-				<li><a  class="p-2" style="color: black;" href="{% url 'logout' %}">Выйти</a></li>	
+				{% if show_button %}
+					<li>
+						<a class="btn sib" style="background-color:#15a362; font-family: 'Calibri'; font-style: normal; font-weight: 400; width: 180px; height: 36px; font-size: 18px; border-radius: 5px;
+						color: white; text-align: center; display: flex; align-items: center; justify-content: center; margin-right: 20px;" href="#">
+							Добавить отпуск
+							<img style="height: 22px; margin-left: 3px;" src="{% static 'arrow_down.png' %}">
+						</a>
+					</li>
+				{% endif %}
+				<li>
+					<a id="username" class="p-2" style="color: rgb(74, 177, 236); display: flex; align-items: center; justify-content: center;" href="{% url 'user_space' user.id %}">{{ user.username }}</a>
+				</li> 
+				<span style="display: flex; align-items: center;">|</span>
+				<li>
+					<a class="p-2" style="color: black; display: flex; align-items: center; justify-content: center;" href="{% url 'password_change' %}">Изменить пароль</a>
+				</li>
+				<span style="display: flex; align-items: center;">|</span>
+				<li>
+					<a class="p-2" style="color: black; display: flex; align-items: center; justify-content: center;" href="{% url 'logout' %}">Выйти</a>
+				</li>    
 			{% else %}
-				<li><a class="p-2" style="color: black;" href="{% url 'login' %}">Войти</a></li> | 
-				<li><a class="p-2" style="color: black;" href="{% url 'signup' %}">Регистрация</a></li>
+				<li>
+					<a class="p-2" style="color: black; display: flex; align-items: center; justify-content: center;" href="{% url 'login' %}">Войти</a>
+				</li>
+				<span style="display: flex; align-items: center;">|</span>
+				<li>
+					<a class="p-2" style="color: black; display: flex; align-items: center; justify-content: center;" href="{% url 'signup' %}">Регистрация</a>
+				</li>
 			{% endif %}
 		</ul>
 	</div>

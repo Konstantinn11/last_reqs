@@ -150,7 +150,7 @@
                 <div class="preloader__item"></div>
             </div>
         </div>
-        {% include 'includes/nav.html' %}
+        {% include 'includes/nav.html' with show_button=show_button show_add_leave_button=show_add_leave_button %}
         <div class="wrapper">
             {% block aside %}
                 {% include 'includes/aside.html' %}

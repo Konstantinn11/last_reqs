@@ -14,9 +14,7 @@
 		height: 37px;
 		display: flex; flex-direction: row; justify-content: center; align-items: center;
 		margin: 2px;
-		border: 3px solid white;
-		border-radius: 10px;
-		box-shadow: 0px 0px 7px rgba(0, 0, 0, 0.2);
+		border-radius: 5px;
 		font-family: 'Calibri';
 		font-style: normal;
 		font-weight: 400;
@@ -26,9 +24,7 @@
 	
 	.sib:hover {
 		transition: 0.4s;
-		background: #3b3b3a;
-		border: 3px solid white;
-		color: white;
+		background-color: rgba(21, 163, 98, 0.8) !important;
 	}
 	.btn-group-vertical {
 		margin: 2px auto;
@@ -42,11 +38,11 @@
 	<aside class="aside" style="margin: 4px; border-radius: 10px; width: 400px;">
 		<div style="display: flex; flex-direction: row; flex-wrap: nowrap; justify-content: center; align-items: center; margin: 5px;">
 			<h4>Отпуска сотрудников</h4>
-			<a class="btn sib" style="background: #15a362; width: 220px; font-size: 16px;" href="#" onclick="openFormCreateVac(this)">
-				<div style="cursor: pointer; justify-content: center; align-items: center;">
-					<img style="height: 20px; margin-right: 5px;" src={% static "trello_plus.png" %}>
+			<a class="btn sib" style="background: #15a362; width: 220px; color: white; font-size: 16px;" href="#" onclick="openFormCreateVac(this)">
+				<div style="display: flex; cursor: pointer; justify-content: center; align-items: center;">
+					<img style="height: 20px; margin-right: 5px;" src="{% static 'circle_plus.png' %}">
+					Новый отпуск
 				</div>
-				Новый отпуск
 			</a>
 		</div>
 		<div style="display: flex; flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: center; margin: 5px;">

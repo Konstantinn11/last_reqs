@@ -1,0 +1,104 @@
+{% load user_filters %}
+{% load static %}
+<style>
+    button {
+        text-transform: none; 
+        background: white; 
+        border: none; 
+        color: black; 
+        padding: 5px; /* Уменьшенный отступ */
+        cursor: pointer; 
+        display: inline-flex; 
+        align-items: center; 
+        font-size: 19px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        width: auto;
+    }
+
+    button:focus {
+        outline: none; 
+        box-shadow: none; 
+    }
+
+    button img {
+        filter: none; 
+        opacity: 1; 
+    }
+
+    button:hover {
+        background: white; 
+        color: #15a362; 
+    }
+
+    button:hover img {
+        filter: brightness(0) saturate(100%) invert(42%) sepia(76%) saturate(231%) hue-rotate(129deg) brightness(93%) contrast(101%);
+    }
+
+    #arrow {
+        transition: transform 0.3s ease; /* Переход для поворота */
+    }
+
+    .arrow-up {
+        transform: rotate(180deg);
+    }
+
+    #sub-menu {
+        display: none; /* Начальное состояние: скрыт */
+        flex-direction: column; 
+        margin-left: 40px;
+    }
+</style>
+
+<aside class="aside" style="margin: 4px; border-radius: 10px;">
+    <div style="display: flex; flex-direction: column; margin: 0; position: relative; margin-top: -5px;">
+        <h5 style="margin-bottom: 0; color: black;">Разделы</h5> 
+        <button type="button" onclick="location.href='{% url 'vac_2' year=2024 otd=0 %}'">
+            <img style="height: 30px; margin-right: 15px;" src="{% static 'list.svg' %}">
+            Графики отпусков
+        </button>
+    
+        <button type="button" id="otd_button" onclick="toggleSubMenu()" style="display: inline-flex; align-items: center;">
+            <img style="height: 30px; margin-right: 15px;" src="{% static 'mood.svg' %}"> 
+            Отпуска 
+            <img id="arrow" src="{% static 'keyboard_arrow_down.svg' %}" style="margin-left: 115px; width: 20px; height: 20px;">
+        </button>
+    
+        <!-- Выпадающий список -->
+        <div id="sub-menu">
+            <button type="button" style="text-decoration: underline; margin-bottom: -12px; margin-top: 4px; background: none; box-shadow: none;">Все отпуска</button>
+            <button type="button" style="text-decoration: underline; margin-bottom: -8px; background: none; box-shadow: none;">Мои отпуска</button>
+        </div>
+    
+        <button type="button" id="employee_button">
+            <img style="height: 30px; margin-right: 15px;" src="{% static 'group.svg' %}">
+            Сотрудники
+        </button>
+    
+        <button type="button" id="profile_button">
+            <img style="height: 30px; margin-right: 15px;" src="{% static 'account.svg' %}">
+            Мой профиль
+        </button>
+    
+        <button type="button" onclick="location.href='{% url 'user_space' user_id=0 %}'">
+            <img style="height: 30px; margin-right: 15px;" src="{% static 'arrow_back.svg' %}">
+            На главную
+        </button>
+    </div>
+</aside>
+
+<script>
+    function toggleSubMenu() {
+        var subMenu = document.getElementById("sub-menu");
+        var arrow = document.getElementById("arrow");
+
+        // Проверяем текущее состояние
+        if (subMenu.style.display === "none" || subMenu.style.display === "") {
+            subMenu.style.display = "flex"; // Показываем выпадающий список
+            arrow.classList.add("arrow-up"); // Поворачиваем стрелку
+        } else {
+            subMenu.style.display = "none"; // Скрываем выпадающий список
+            arrow.classList.remove("arrow-up"); // Возвращаем стрелку вниз
+        }
+    }
+</script>

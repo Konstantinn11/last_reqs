@@ -11,7 +11,7 @@
 <div style="display: flex; flex-direction: row; justify-content: left; align-items: center; flex-wrap: nowrap; width: 100%;">
     <a style="color: black; font-weight: bold; font-size: 38px; text-align: left; line-height: 50px; white-space: nowrap;">Календарь отпусков на {{year}}</a>
     <div style="display: flex; flex-direction: row; align-items: center; margin-left: 20px; gap: 20px; flex-grow: 1; justify-content: flex-end;">
-        <select name="filtr_otd" id="filtr_otd" style="font-size: 18px; padding: 5px 10px; border: 1px solid rgb(206, 202, 202); color: #808080; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; width: 150px; height: 35px; cursor: pointer;" onchange="updateYearDropdown()">
+        <select name="filtr_otd" id="filtr_otd" style="font-size: 18px; padding: 5px 10px; border: 1px solid rgb(206, 202, 202); color: #808080; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; width: 179px; height: 35px; cursor: pointer;" onchange="updateYearDropdown()">
             <option value="0" disabled selected>Выберите отдел</option>
             {% for otd in otds_for_choise %}
                 <option value="{{ otd }}" {% if otd == current_otd %}selected{% endif %}>{{ otd }}</option>
@@ -19,20 +19,20 @@
             <option value="0" {% if current_otd == 0 %}selected{% endif %}>Все отделы</option>
         </select>
 
-        <select id="filtr_year" name="filtr_year" style="font-size: 18px; padding: 5px 10px; border: 1px solid rgb(206, 202, 202); color: #808080; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; width: 150px; height: 35px; cursor: pointer;" onchange="updateFilters()">
+        <select id="filtr_year" name="filtr_year" style="font-size: 18px; padding: 5px 10px; border: 1px solid rgb(206, 202, 202); color: #808080; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; width: 169px; height: 35px; cursor: pointer;" onchange="updateFilters()">
             <option value="0" disabled selected>Выберите год</option>
             <option value="2023">2023</option>
             <option value="2024">2024</option>
             <option value="2025">2025</option>
         </select>
 
-        <select id="viewType" style="font-size: 18px; padding: 5px 10px; border: 1px solid rgb(206, 202, 202); color: #808080; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; width: 145px; height: 35px; cursor: pointer;" onchange="redirectToView()">
+        <select id="viewType" name="viewType" style="font-size: 18px; padding: 5px 10px; border: 1px solid rgb(206, 202, 202); color: #808080; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; width: 148px; height: 35px; cursor: pointer;" onchange="redirectToView()">
             <option value="0" disabled selected>Вид</option>
             <option value="current">Календарь</option>
             <option value="custom">График: дни</option>
         </select>
 
-        <select id="actionSelect" style="font-size: 18px; padding: 5px 10px; border: 1px solid rgb(206, 202, 202); color: #808080; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; width: 171px; height: 35px; cursor: pointer;">
+        <select id="actionSelect" name="actionSelect" style="font-size: 18px; padding: 5px 10px; border: 1px solid rgb(206, 202, 202); color: #808080; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; width: 127px; height: 35px; cursor: pointer;">
             <option value="" disabled selected>Экспорт</option>
             <option value="export">Лист ознакомления</option>
             <option value="excel">Файл Excel</option>
@@ -386,6 +386,42 @@
 
 {% block content %}
 <style>
+	#filtr_otd {
+		background-image: url("{% static 'filter_alt.png' %}"), url("{% static 'arrow_drop.png' %}");
+		background-position: left 5px center, right 5px center;
+		background-repeat: no-repeat, no-repeat;
+		background-size: 24px 24px, 20px 20px;
+		padding-left: 10px;  /* Отступ для текста от левого изображения */
+		padding-right: 3px; /* Отступ для текста от правого изображения */
+	}
+	
+	#filtr_year {
+		background-image: url("{% static 'calendar_month.png' %}"), url("{% static 'arrow_drop.png' %}");
+		background-position: left 5px center, right 5px center;
+		background-repeat: no-repeat, no-repeat;
+		background-size: 24px 24px, 20px 20px;
+		padding-left: 10px;  /* Отступ для текста от левого изображения */
+		padding-right: 3px; /* Отступ для текста от правого изображения */
+	}
+	
+	#viewType {
+		background-image: url("{% static 'menu.png' %}"), url("{% static 'arrow_drop.png' %}");
+		background-position: left 5px center, right 5px center;
+		background-repeat: no-repeat, no-repeat;
+		background-size: 24px 24px, 20px 20px;
+		padding-left: 10px;  /* Отступ для текста от левого изображения */
+		padding-right: 3px; /* Отступ для текста от правого изображения */
+	}
+	
+	#actionSelect {
+		background-image: url("{% static 'print.png' %}"), url("{% static 'arrow_drop.png' %}");
+		background-position: left 5px center, right 5px center;
+		background-repeat: no-repeat, no-repeat;
+		background-size: 24px 24px, 20px 20px;
+		padding-left: 10px;  /* Отступ для текста от левого изображения */
+		padding-right: 3px; /* Отступ для текста от правого изображения */
+	}
+
 	#tooltip {
 		position: absolute;
 		background-color: rgba(0, 0, 0, 0.8);  /* Полупрозрачный черный фон */

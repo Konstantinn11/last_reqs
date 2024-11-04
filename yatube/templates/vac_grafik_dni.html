@@ -23,22 +23,16 @@
             <option value="2024">2024</option>
             <option value="2025">2025</option>
         </select>
-        <select id="viewType" style="font-size: 18px; padding: 5px 10px; border: 1px solid rgb(206, 202, 202); color: #808080; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; width: 145px; height: 35px; cursor: pointer;" onchange="redirectToView()">
+        <select id="viewType" name="viewType" style="font-size: 18px; padding: 5px 10px; border: 1px solid rgb(206, 202, 202); color: #808080; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; width: 150px; height: 35px; cursor: pointer;" onchange="redirectToView()">
             <option value="0" disabled selected>Вид</option>
             <option value="current">Календарь</option>
             <option value="custom">График: дни</option>
         </select>
-        <select id="actionSelect" style="font-size: 18px; padding: 5px 10px; border: 1px solid rgb(206, 202, 202); color: #808080; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; width: 171px; height: 35px; cursor: pointer;">
+        <select id="actionSelect" name="actionSelect" style="font-size: 18px; padding: 5px 10px; border: 1px solid rgb(206, 202, 202); color: #808080; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; width: 140px; height: 35px; cursor: pointer;">
             <option value="" disabled selected>Экспорт</option>
             <option value="export">Лист ознакомления</option>
             <option value="excel">Файл Excel</option>
         </select>
-		<a class="btn sib" style="border: 1px solid rgb(206, 202, 202); background-color:#15a362; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; width: 180px; height: 35px; font-size: 18px; padding: 5px 10px; border-radius: 3px;" href="#" onclick="openFormCreateVac(this)">
-			<div style="cursor: pointer; justify-content: center; align-items: center;">
-				<img style="height: 16px; position: relative; top: -2px; left: -7px;" src={% static "trello_plus.png" %}>
-			</div>
-			Добавить отпуск
-		</a>
 		</div>
     </div>
 </div>
@@ -369,6 +363,24 @@
 	#filtr_otd, #filtr_year {
 		display: none;
 	}
+
+	#viewType {
+		background-image: url("{% static 'menu.png' %}"), url("{% static 'arrow_drop.png' %}");
+		background-position: left 5px center, right 5px center;
+		background-repeat: no-repeat, no-repeat;
+		background-size: 24px 24px, 20px 20px;
+		padding-left: 10px;  /* Отступ для текста от левого изображения */
+		padding-right: 3px; /* Отступ для текста от правого изображения */
+	}
+	
+	#actionSelect {
+		background-image: url("{% static 'print.png' %}"), url("{% static 'arrow_drop.png' %}");
+		background-position: left 5px center, right 5px center;
+		background-repeat: no-repeat, no-repeat;
+		background-size: 24px 24px, 20px 20px;
+		padding-left: 10px;  /* Отступ для текста от левого изображения */
+		padding-right: 3px; /* Отступ для текста от правого изображения */
+	}
 	
 	.flex-container {
 		display: flex;
@@ -377,10 +389,6 @@
 		align-items: center;
 		gap: 20px;
 		width: 100%;
-	}
-
-	.flex-container select, .flex-container a {
-		flex-grow: 1; /* Позволяет элементам занимать оставшееся пространство */
 	}
 
 	.calendar-wrapper {
@@ -1357,7 +1365,7 @@
 		let month_e = day_end.split('-')[1];
 		let year_e = day_end.split('-')[0];
 
-		let url = "{% url 'add_new_vac_dni' otd 99 99 year 99 99 99 99 %}";
+		let url = "{% url 'add_new_vac' otd 99 99 year 99 99 99 99 %}";
 		let arrayFromUrl = url.split('/');
 		arrayFromUrl[5] = day;
 		arrayFromUrl[6] = month;

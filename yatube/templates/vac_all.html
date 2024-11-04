@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% load cache %}
+{% block title %}Отпуска{% endblock %}
+{% load user_filters %}
+{% load static %}
+{% block header %}
+<script src="{% static 'libs/index.umd.js' %}"></script>
+<div style="display: flex; flex-direction: row; justify-content: left; align-items: center; flex-wrap: nowrap; width: 120%;">
+    <a style="color: black; font-weight: bold; font-size: 38px; text-align: left; line-height: 50px; white-space: nowrap;">Ближайшие отпуска коллег</a>
+    <div style="display: flex; flex-direction: row; align-items: center; margin-left: 20px; gap: 20px; flex-grow: 1; justify-content: flex-end;">
+        <a class="btn sib" style="background-color:#15a362; font-family: 'Calibri'; font-style: normal; font-weight: 400; width: 280px; height: 44px; font-size: 21px;
+        padding: 0 10px; margin-right: 20px; border-radius: 5px; color: white; text-align: center; display: flex; align-items: center; justify-content: center;" href="#">
+            Перейти к моим отпускам
+        </a>
+    </div>
+</div>
+
+<style>
+    .btn.sib:hover {
+        background-color: rgba(21, 163, 98, 0.8) !important;
+    }
+
+    .table-container {
+        width: 1313px;
+        display: flex;
+        flex-direction: row;
+        margin-top: 15px;
+        border: 1px solid #ccc;
+        box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1); /* тень */
+        border-radius: 5px; /* закругленные углы */
+    }
+
+    .custom-table {
+        width: 1313px;
+        border-collapse: collapse;
+    }
+
+    .custom-table th {
+        text-align: left;
+        font-weight: bold;
+        border-bottom: 1px solid rgb(187, 185, 185);
+        padding: 10px;
+        font-size: 18.5px;
+    }
+
+    .custom-table td {
+        text-align: left;
+        border-bottom: 1px solid rgb(187, 185, 185);
+        padding: 10px;
+    }
+
+    .custom-table th {
+        border-bottom: 1px solid #ccc;
+    }
+
+    .custom-table .employee-cell {
+        display: flex;
+        flex-direction: row;
+        justify-content: left;
+        align-items: center;
+    }
+
+    .employee-color {
+        width: 15px;
+        height: 15px;
+        border: 1px solid black;
+        margin-right: 6px;
+    }
+
+    .on-vacation-label {
+        background-color: #15a362;
+        color: white;
+        padding: 3px 8px;
+        margin-left: 15px;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: bold;
+    }
+
+    .vacation-row {
+        background-color: #d4e2f9;
+    }
+</style>
+{% endblock %}
+
+{% block aside %}
+	{% include 'includes/aside_vac_all.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="table-container">
+    <table class="custom-table">
+        <tr>
+            <th>Сотрудник</th>
+            <th>Отдел</th>
+            <th>Период</th>
+            <th>Дней</th>
+            <th>Уведомление</th>
+        </tr>
+        {% for key, value in vacations_by_user.items %}
+        <tr class="vacation-cell {% if value.in_vacation %}vacation-row{% endif %}" data-employee-name="{{ key }}">
+            <td>
+                <div class="employee-cell" onclick="filtrByUser(this)">
+                    <div class="employee-color" style="background: {{ value.color }};"></div>
+                    <a href="#" style="color: #15a362; text-decoration: underline; font-size: 19px;">{{ key }}</a>
+                    {% if value.in_vacation %}
+                        <span class="on-vacation-label">в отпуске</span>
+                    {% endif %}
+                </div>
+            </td>
+            <td style="font-size: 18px;">{{ value.otd }}</td>
+            <td>
+                <div>
+                    {% for period in value.vacation_periods %}
+                    <a href="#" style="color: #15a362; text-decoration: underline; font-style: italic; font-size: 18px;">{{ period }}</a><br>
+                    {% endfor %}
+                </div>
+            </td>
+            <td>
+                <div>
+                    {% for start_date, days_count in value.vacation_start_dates %}
+                    <span style="font-size: 19px;">{{ days_count }}</span><br>
+                    {% endfor %}
+                </div>
+            </td>
+            <td>
+                <a href="#" style="color: #15a362; text-decoration: underline; font-size: 19px;">скачать (word)</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}
