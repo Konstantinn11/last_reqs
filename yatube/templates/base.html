@@ -126,6 +126,24 @@
         display: none;
     }
 
+    .text {color: black; font-weight: normal; font-size: 21px; font-family: 'Calibri';}
+    .year {color: black; font-weight: bold; font-size: 21px; font-family: 'Calibri';}
+    #leave-dropdown ul li a {
+        text-decoration: none;
+    }
+
+    #leave-dropdown {
+        padding: 6px; /* Отступ от краев контейнера */
+    }
+
+    #leave-dropdown ul {
+        padding: 6px 0; /* Отступы для списка */
+        text-align: center;
+    }
+
+    #leave-dropdown ul li {
+        margin: 6px 0; /* Расстояние между элементами */
+    }
 </style>
 
 
@@ -151,6 +169,14 @@
             </div>
         </div>
         {% include 'includes/nav.html' with show_button=show_button show_add_leave_button=show_add_leave_button %}
+        <div id="leave-dropdown" style="width:212px; display: none; position: absolute; background-color: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 5px; z-index: 2000;">
+            <ul style="list-style-type: none; padding: 0; margin: 0;">
+                <li><a href="#"><span class="text">Отпуск на</span> <span class="year">2024</span> <span class="text">год</span></a></li>
+                <li><a href="#"><span class="text">Отпуск на</span> <span class="year">2025</span> <span class="text">год</span></a></li>
+                <li><a href="#"><span class="text">Отпуск на</span> <span class="year">2026</span> <span class="text">год</span></a></li>
+            </ul>
+        </div>
+        
         <div class="wrapper">
             {% block aside %}
                 {% include 'includes/aside.html' %}
@@ -174,6 +200,35 @@
                     document.body.classList.remove('loaded_hiding');
                 }, 500)
             }
+
+            document.addEventListener('DOMContentLoaded', () => {
+            const button = document.getElementById('add-leave-button');
+            const dropdown = document.getElementById('leave-dropdown');
+
+            // Проверка существования кнопки для избежания ошибок
+            if (button) {
+                button.addEventListener('click', (event) => {
+                    event.preventDefault(); // Предотвращаем переход по ссылке
+                    
+                    // Переключение видимости выпадающего списка
+                    dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+
+                    // Позиционирование выпадающего списка по центру под кнопкой
+                    const buttonRect = button.getBoundingClientRect();
+                    const dropdownWidth = dropdown.offsetWidth;
+
+                    dropdown.style.top = `${buttonRect.bottom + window.scrollY +20}px`;
+                    dropdown.style.left = `${buttonRect.left + window.scrollX + (buttonRect.width - dropdownWidth) / 2}px`;
+                });
+            }
+
+                // Скрытие выпадающего списка при клике вне его области
+                document.addEventListener('click', (event) => {
+                    if (!button.contains(event.target) && !dropdown.contains(event.target)) {
+                        dropdown.style.display = 'none';
+                    }
+                });
+            });
         </script>
     </body>
 </html> 
