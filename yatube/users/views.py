@@ -1894,12 +1894,15 @@ def vac_all(request, year, otd):
     users_otd = User_info.objects.all()
     for vac in filtered_vacations:
         if vac.user.get_full_name() not in vacations_by_user.keys():
+            user_info = users_otd.get(user_id=vac.user_id)
+            position = user_info.position.position if user_info.position else "Не указана"
             vacations_by_user[vac.user.get_full_name()] = {
                 'color': users_colors[vac.user.get_full_name()],
                 'dates': [],  # {'d': 12.12 -18.12, 'vac_id': vac_id, 'vac_can_redact': vac_can_redact}
                 'sum': 0,
                 'otd': '',
                 'user_id': vac.user_id,
+                'position': position,
                 'vacation_start_dates': [],
                 'vacation_end_dates': [],
                 'vacation_periods': [],

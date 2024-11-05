@@ -16,75 +16,20 @@
 </div>
 
 <style>
-    .btn.sib:hover {
-        background-color: rgba(21, 163, 98, 0.8) !important;
-    }
-
-    .table-container {
-        width: 1313px;
-        display: flex;
-        flex-direction: row;
-        margin-top: 15px;
-        border: 1px solid #ccc;
-        box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1); /* тень */
-        border-radius: 5px; /* закругленные углы */
-    }
-
-    .custom-table {
-        width: 1313px;
-        border-collapse: collapse;
-    }
-
-    .custom-table th {
-        text-align: left;
-        font-weight: bold;
-        border-bottom: 1px solid rgb(187, 185, 185);
-        padding: 10px;
-        font-size: 18.5px;
-    }
-
-    .custom-table td {
-        text-align: left;
-        border-bottom: 1px solid rgb(187, 185, 185);
-        padding: 10px;
-    }
-
-    .custom-table th {
-        border-bottom: 1px solid #ccc;
-    }
-
-    .custom-table .employee-cell {
-        display: flex;
-        flex-direction: row;
-        justify-content: left;
-        align-items: center;
-    }
-
-    .employee-color {
-        width: 15px;
-        height: 15px;
-        border: 1px solid black;
-        margin-right: 6px;
-    }
-
-    .on-vacation-label {
-        background-color: #15a362;
-        color: white;
-        padding: 3px 8px;
-        margin-left: 15px;
-        border-radius: 4px;
-        font-size: 14px;
-        font-weight: bold;
-    }
-
-    .vacation-row {
-        background-color: #d4e2f9;
-    }
+    /* Стили таблицы и кнопок */
+    .btn.sib:hover { background-color: rgba(21, 163, 98, 0.8) !important; }
+    .table-container { width: 1313px; display: flex; flex-direction: row; margin-top: 15px; border: 1px solid #ccc; box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1); border-radius: 5px; }
+    .custom-table { width: 1313px; border-collapse: collapse; }
+    .custom-table th, .custom-table td { text-align: left; border-bottom: 1px solid rgb(187, 185, 185); padding: 10px; font-size: 18px; }
+    .custom-table .employee-cell { display: flex; flex-direction: row; justify-content: left; align-items: center; }
+    .employee-color { width: 15px; height: 15px; border: 1px solid black; margin-right: 6px; }
+    .on-vacation-label { background-color: #15a362; color: white; padding: 3px 8px; margin-left: 15px; border-radius: 4px; font-size: 14px; font-weight: bold; }
+    .vacation-row { background-color: #d4e2f9; }
 </style>
 {% endblock %}
 
 {% block aside %}
-	{% include 'includes/aside_vac_all.html' %}
+    {% include 'includes/aside_vac_all.html' %}
 {% endblock %}
 
 {% block content %}
@@ -98,7 +43,7 @@
             <th>Уведомление</th>
         </tr>
         {% for key, value in vacations_by_user.items %}
-        <tr class="vacation-cell {% if value.in_vacation %}vacation-row{% endif %}" data-employee-name="{{ key }}">
+        <tr class="vacation-cell {% if value.in_vacation %}vacation-row{% endif %}" data-employee-name="{{ key }}" data-position="{{ value.position }}">
             <td>
                 <div class="employee-cell" onclick="filtrByUser(this)">
                     <div class="employee-color" style="background: {{ value.color }};"></div>
@@ -124,10 +69,67 @@
                 </div>
             </td>
             <td>
-                <a href="#" style="color: #15a362; text-decoration: underline; font-size: 19px;">скачать (word)</a>
+                <a href="#" class="download-word" style="color: #15a362; text-decoration: underline; font-size: 19px;">скачать (word)</a>
             </td>
         </tr>
         {% endfor %}
     </table>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.download-word').forEach(button => {
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+
+                const row = event.target.closest('tr');
+                const employeeName = row.getAttribute('data-employee-name');
+                const department = row.children[1].textContent.trim();
+                const position = row.getAttribute('data-position');  // Извлекаем должность
+                const periods = Array.from(row.children[2].querySelectorAll('a')).map(a => a.textContent);
+                const days = Array.from(row.children[3].querySelectorAll('span')).map(span => span.textContent);
+
+                const doc = new docx.Document({
+                    sections: [{
+                        properties: {},
+                        children: [
+                            new docx.Paragraph({
+                                text: `Отчет об отпуске сотрудника: ${employeeName}`,
+                                heading: docx.HeadingLevel.HEADING_1,
+                            }),
+                            new docx.Paragraph({
+                                text: `Должность: ${position}`,  // Добавляем должность
+                                spacing: { after: 200 },
+                            }),
+                            new docx.Paragraph({
+                                text: `Отдел: ${department}`,
+                                spacing: { after: 200 },
+                            }),
+                            new docx.Paragraph({
+                                text: `Периоды отпуска:`,
+                                spacing: { after: 100 },
+                            }),
+                            ...periods.map(period => new docx.Paragraph(period)),
+                            new docx.Paragraph({
+                                text: `Количество дней отпуска:`,
+                                spacing: { after: 100 },
+                            }),
+                            ...days.map(day => new docx.Paragraph(day)),
+                        ],
+                    }],
+                });
+
+                docx.Packer.toBlob(doc).then((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `${employeeName}-vacation.docx`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                });
+            });
+        });
+    });
+</script>
 {% endblock %}
