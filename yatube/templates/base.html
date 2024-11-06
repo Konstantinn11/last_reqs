@@ -144,10 +144,114 @@
     #leave-dropdown ul li {
         margin: 6px 0; /* Расстояние между элементами */
     }
+
+    /* Скрытый блок */
+    #info-block {
+        position: fixed;
+        top: 0;
+        left: -407px; /* Скрыть блок слева */
+        width: 407px;
+        height: 100%;
+        background-color: #f4f4f4;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+        transition: left 0.3s ease-in-out; /* Плавная анимация */
+        padding: 20px;
+        z-index: 1000;
+    }
+
+    /* Открытый блок */
+    #info-block.open {
+        left: 0; /* При добавлении класса 'open', блок выезжает */
+    }
+
+    /* Стиль для кнопки закрытия */
+    .close-btn {
+        position: absolute;
+        top: -7px;
+        right: -37px;
+        font-size: 40px;
+        font-weight: bold;
+        cursor: pointer;
+        color: #333;
+        background: transparent;
+        border: none;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+        text-decoration: underline;
+    }
+
+    #info-block.open .close-btn {
+        opacity: 1; /* Крестик становится видимым */
+        visibility: visible; /* Становится видимым */
+        transition: opacity 0.3s ease, visibility 0s linear 0s; /* Плавное появление */
+    }
+
+    .custom-button {
+        text-transform: none;
+        background: none;
+        border: none;
+        color: black;
+        padding: 5px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        font-size: 21px;
+        width: auto;
+    }
+
+    .custom-button:focus {
+        outline: none;
+        box-shadow: none;
+    }
+
+    .custom-button img {
+        filter: none;
+        opacity: 1;
+    }
+
+    .custom-button:hover {
+        background: none;
+        color: #15a362;
+    }
+
+    .custom-button:hover img {
+        filter: brightness(0) saturate(100%) invert(42%) sepia(76%) saturate(231%) hue-rotate(129deg) brightness(93%) contrast(101%);
+    }
+
+    #arrow {
+        transition: transform 0.3s ease; /* Переход для поворота */
+    }
+
+    .arrow-up {
+        transform: rotate(180deg);
+    }
+
+    #sub-menu-base {
+        display: flex;
+        flex-direction: column; 
+        margin-left: 40px;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.4s ease-in-out;
+    }
+
+    #sub-menu-base.open {
+        max-height: 200px; /* Установите значение, достаточное для полного раскрытия */
+    }
+
+    .submenu-button {
+        color: #5d6778; /* Цвет текста */
+        text-align: center;
+        margin-left: 3px; /* Сдвиг кнопок вправо */
+        text-decoration: underline;
+        background: none;
+        border: none;
+        box-shadow: none;
+        cursor: pointer;
+        font-size: 20px;
+    }
 </style>
-
-
-
 
 {% load static %}
 <html>
@@ -169,6 +273,46 @@
             </div>
         </div>
         {% include 'includes/nav.html' with show_button=show_button show_add_leave_button=show_add_leave_button %}
+        <div id="info-block" class="info-block">
+            <a href="{% url 'vac_all' year=2024 otd=0 %}">
+                <img style="height: 45px; margin-right: 100px;" src={% static "logo_ya_removebg.png" %}>
+            </a>
+            <div style="display: flex; flex-direction: column; position: relative; margin-top: 5px;">
+                <button class="custom-button" type="button" onclick="showLoader(this); location.href='{% url 'vac_2' year=2024 otd=0 %}'">
+                    <img id="vacationIcon" style="height: 30px; margin-right: 15px;" src="{% static 'list.svg' %}"> Графики отпусков
+                </button>
+        
+                {% if key == request.user.get_full_name or request.user.get_full_name in bosses %}
+                    <button class="custom-button" type="button" id="otd_button" onclick="toggleSubMenuBase()" style="display: inline-flex; align-items: center;">
+                        <img id="vacationMenuIcon" style="height: 30px; margin-right: 15px;" src="{% static 'mood.svg' %}"> Отпуска 
+                        <img id="arrow" src="{% static 'keyboard_arrow_down.svg' %}" style="margin-left: 80px; width: 20px; height: 20px;">
+                    </button>
+        
+                    <!-- Выпадающий список -->
+                    <div id="sub-menu-base">
+                        <button class="custom-button submenu-button" type="button" onclick="showLoader(this)" style="text-decoration: underline; margin-bottom: -12px; margin-top: 4px; background: none; box-shadow: none;">Все отпуска</button>
+                        <button class="custom-button submenu-button" type="button" onclick="showLoader(this)" style="text-decoration: underline; margin-bottom: -8px; background: none; box-shadow: none;">Мои отпуска</button>
+                    </div>
+                {% else %}
+                    <button class="custom-button" type="button" onclick="showLoader(this); location.href='#'" style="display: inline-flex; align-items: center;">
+                        <img id="vacationMenuIcon" style="height: 30px; margin-right: 15px;" src="{% static 'mood.svg' %}"> Мои отпуска
+                    </button>    
+                {% endif %}
+                <button class="custom-button" type="button" id="employee_button" onclick="showLoader(this)">
+                    <img id="employeeIcon" style="height: 30px; margin-right: 15px;" src="{% static 'group.svg' %}"> Сотрудники
+                </button>
+        
+                <button class="custom-button" type="button" id="profile_button" onclick="showLoader(this)">
+                    <img id="profileIcon" style="height: 30px; margin-right: 15px;" src="{% static 'account.svg' %}"> Мой профиль
+                </button>
+        
+                <button class="custom-button" type="button" onclick="showLoader(this); location.href='{% url 'user_space' user_id=0 %}'">
+                    <img id="homeIcon" style="height: 30px; margin-right: 15px;" src="{% static 'arrow_back.svg' %}"> На главную
+                </button>
+            </div>
+            <span id="close-info" class="close-btn">×</span>
+        </div>
+
         <div id="leave-dropdown" style="width:212px; display: none; position: absolute; background-color: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 5px; z-index: 2000;">
             <ul style="list-style-type: none; padding: 0; margin: 0;">
                 <li><a href="#"><span class="text">Отпуск на</span> <span class="year">2023</span> <span class="text">год</span></a></li>
@@ -229,6 +373,34 @@
                     }
                 });
             });
+
+            document.getElementById('toggle-info-block').addEventListener('click', function(e) {
+                e.preventDefault();  // Чтобы не было перехода по ссылке
+                document.getElementById('info-block').classList.toggle('open');
+            });
+
+            // Для закрытия блока по кнопке внутри него
+            document.getElementById('close-info').addEventListener('click', function() {
+                document.getElementById('info-block').classList.remove('open');
+            });
+
+            function toggleSubMenuBase() {
+            var subMenu = document.getElementById("sub-menu-base");
+            var arrow = document.getElementById("arrow");
+
+            // Тоггл класса для открытия/закрытия меню
+            subMenu.classList.toggle("open");
+            
+            // Поворачиваем стрелку
+            arrow.classList.toggle("arrow-up");
+        }
+
+        function showLoader(button) {
+            const img = button.querySelector('img');
+            if (img) {
+                img.src = "{% static 'load.gif' %}";
+            }
+        }
         </script>
     </body>
 </html> 

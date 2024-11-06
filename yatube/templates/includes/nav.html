@@ -15,8 +15,8 @@
 <nav class="navbar navbar-expand-md" style="font-weight: bold; background: #E6E6E6;">
 	<div class="navbar-collapse collapse w-100 order-1 order-md-0 dual-collapse2">
 		{% if show_add_leave_button %}
-				<a href="#">
-					<img class="menu-icon" style="height: 40px; width: 40px; display: flex; align-items: center; justify-content: center; margin-left: 4px;" src="{% static 'menu.svg' %}">
+				<a id="toggle-info-block">
+					<img class="menu-icon" style="height: 40px; width: 40px; display: flex; align-items: center; justify-content: center; margin-left: 4px; cursor: pointer;" src="{% static 'menu.svg' %}">
 				</a>
 		{% endif %}
 		<img style="height: 45px; margin-left: 30px; margin-right: 100px;" src={% static "logo_ya.png" %}>
