@@ -366,10 +366,10 @@
                 });
             }
 
-                // Скрытие выпадающего списка при клике вне его области
-                document.addEventListener('click', (event) => {
-                    if (!button.contains(event.target) && !dropdown.contains(event.target)) {
-                        dropdown.style.display = 'none';
+            // Скрытие выпадающего списка при клике вне его области
+            document.addEventListener('click', (event) => {
+                if (!button.contains(event.target) && !dropdown.contains(event.target)) {
+                    dropdown.style.display = 'none';
                     }
                 });
             });
@@ -393,14 +393,14 @@
             
             // Поворачиваем стрелку
             arrow.classList.toggle("arrow-up");
-        }
-
-        function showLoader(button) {
-            const img = button.querySelector('img');
-            if (img) {
-                img.src = "{% static 'load.gif' %}";
             }
-        }
+
+            function showLoader(button) {
+                const img = button.querySelector('img');
+                if (img) {
+                    img.src = "{% static 'load.gif' %}";
+                }
+            }
         </script>
     </body>
 </html> 

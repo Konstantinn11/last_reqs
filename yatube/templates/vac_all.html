@@ -73,17 +73,11 @@
                 </div>
             </td>
             <td>
-                {% if request.user.get_full_name == key or request.user.get_full_name in bosses %}
-                    <div style="display: inline-block;">
-                        <a href="#" class="download-word" style="color: #15a362; text-decoration: underline; font-size: 19px;">
-                            скачать (word)
-                        </a>
-                    </div>
-                {% else %}
-                    <div style="color: black; font-size: 19px;">
+                <div style="display: inline-block;">
+                    <a href="#" class="download-word" style="color: #15a362; text-decoration: underline; font-size: 19px;">
                         скачать (word)
-                    </div>
-                {% endif %}
+                    </a>
+                </div>
             </td>
         </tr>
         {% endfor %}
