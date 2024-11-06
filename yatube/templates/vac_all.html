@@ -20,7 +20,7 @@
     .btn.sib:hover { background-color: rgba(21, 163, 98, 0.8) !important; }
     .table-container { width: 1313px; display: flex; flex-direction: row; margin-top: 15px; border: 1px solid #ccc; box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1); border-radius: 5px; }
     .custom-table { width: 1313px; border-collapse: collapse; }
-    .custom-table th, .custom-table td { text-align: left; border-bottom: 1px solid rgb(187, 185, 185); padding: 10px; font-size: 18px; }
+    .custom-table th, .custom-table td { text-align: left; border-bottom: 1px solid rgb(187, 185, 185); padding: 10px; font-size: 18px; vertical-align: middle; }
     .custom-table .employee-cell { display: flex; flex-direction: row; justify-content: left; align-items: center; }
     .employee-color { width: 15px; height: 15px; border: 1px solid black; margin-right: 6px; }
     .on-vacation-label { background-color: #15a362; color: white; padding: 3px 8px; margin-left: 15px; border-radius: 4px; font-size: 14px; font-weight: bold; }
@@ -40,7 +40,7 @@
             <th>Отдел</th>
             <th>Период</th>
             <th>Дней</th>
-            <th>Уведомление</th>
+            <th>Заявление</th>
         </tr>
         {% for key, value in vacations_by_user.items %}
         <tr class="vacation-cell {% if value.in_vacation %}vacation-row{% endif %}" data-employee-name="{{ key }}" data-position="{{ value.position }}">
@@ -55,9 +55,13 @@
             </td>
             <td style="font-size: 18px;">{{ value.otd }}</td>
             <td>
-                <div>
+                <div style="display: inline-block; color: black; font-style: italic; font-size: 18px;">
                     {% for period in value.vacation_periods %}
-                    <a href="#" style="color: #15a362; text-decoration: underline; font-style: italic; font-size: 18px;">{{ period }}</a><br>
+                        {% if key == request.user.get_full_name or request.user.get_full_name in bosses %}
+                            <a href="#" style="color: #15a362; text-decoration: underline; font-style: italic;">{{ period }}</a><br>
+                        {% else %}
+                            <span style="display: inline-block; color: black; font-style: italic;">{{ period }}</span><br>
+                        {% endif %}
                     {% endfor %}
                 </div>
             </td>
@@ -69,7 +73,17 @@
                 </div>
             </td>
             <td>
-                <a href="#" class="download-word" style="color: #15a362; text-decoration: underline; font-size: 19px;">скачать (word)</a>
+                {% if request.user.get_full_name == key or request.user.get_full_name in bosses %}
+                    <div style="display: inline-block;">
+                        <a href="#" class="download-word" style="color: #15a362; text-decoration: underline; font-size: 19px;">
+                            скачать (word)
+                        </a>
+                    </div>
+                {% else %}
+                    <div style="color: black; font-size: 19px;">
+                        скачать (word)
+                    </div>
+                {% endif %}
             </td>
         </tr>
         {% endfor %}

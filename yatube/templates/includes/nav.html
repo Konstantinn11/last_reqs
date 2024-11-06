@@ -5,6 +5,9 @@
 	.main_text {
 		margin-left: 10px; padding-left: 10px; color: gray; margin-right: 20px; width: 350px auto; line-height: 40px;
 	}
+	a:hover .menu-icon {
+        filter: brightness(0) saturate(100%) invert(42%) sepia(76%) saturate(231%) hue-rotate(129deg) brightness(93%) contrast(101%);
+    }
 </style>
 {% load static %}
 {% load user_filters %}
@@ -13,7 +16,7 @@
 	<div class="navbar-collapse collapse w-100 order-1 order-md-0 dual-collapse2">
 		{% if show_add_leave_button %}
 				<a href="#">
-					<img style="height: 40px; width: 40px; display: flex; align-items: center; justify-content: center; filter: brightness(0) saturate(100%) invert(42%) sepia(76%) saturate(231%) hue-rotate(129deg) brightness(93%) contrast(101%);" src="{% static 'menu.svg' %}">
+					<img class="menu-icon" style="height: 40px; width: 40px; display: flex; align-items: center; justify-content: center; margin-left: 4px;" src="{% static 'menu.svg' %}">
 				</a>
 		{% endif %}
 		<img style="height: 45px; margin-left: 30px; margin-right: 100px;" src={% static "logo_ya.png" %}>

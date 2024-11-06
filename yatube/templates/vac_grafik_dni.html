@@ -23,25 +23,40 @@
             <option value="2024">2024</option>
             <option value="2025">2025</option>
         </select>
-        <select id="viewType" name="viewType" style="font-size: 18px; padding: 5px 10px; border: 1px solid rgb(206, 202, 202); color: #808080; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; width: 150px; height: 35px; cursor: pointer;" onchange="redirectToView()">
+        <select id="viewType" name="viewType" style="font-size: 18px; padding: 5px 10px; border: 1px solid rgb(206, 202, 202); color: #808080; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; width: 120px; height: 35px; cursor: pointer;" onchange="redirectToView()">
             <option value="0" disabled selected>Вид</option>
             <option value="current">Календарь</option>
             <option value="custom">График: дни</option>
         </select>
-        <select id="actionSelect" name="actionSelect" style="font-size: 18px; padding: 5px 10px; border: 1px solid rgb(206, 202, 202); color: #808080; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; width: 140px; height: 35px; cursor: pointer;">
+
+		{% if request.user.get_full_name == key or request.user.get_full_name in bosses %}
+        <select id="actionSelect" name="actionSelect" style="font-size: 18px; padding: 5px 10px; border: 1px solid rgb(206, 202, 202); color: #808080; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; width: 170px; height: 35px; cursor: pointer;">
             <option value="" disabled selected>Экспорт</option>
             <option value="export">Лист ознакомления</option>
             <option value="excel">Файл Excel</option>
         </select>
+		{% endif %}
 		</div>
     </div>
 </div>
 <div style="display: flex; flex-direction: row; justify-content: left; align-items: center; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; font-size: 18px; color: #808080;">
     Параметры фильтрации: отдел<span style="margin-left: 2px; color: #20c997;">&nbsp;{% if otd == 0%}Все отделы{% else %}{{ otd }}{% endif %},&nbsp;</span>год<span style="color: #20c997;">&nbsp;{{ year }}</span>.
-	<a href="{% url 'vac_2' 2024 0 %}" style="margin-left: 15px; color: #20c997; cursor: pointer; text-decoration: underline;">Сбросить все фильтры</a>
 </div>
 
 <script>
+	document.addEventListener("DOMContentLoaded", function() {
+		const viewTypeSelect = document.getElementById("viewType");
+
+		// Устанавливаем всегда текст "Вид" в качестве отображаемого
+		viewTypeSelect.addEventListener("change", function() {
+			const defaultOption = viewTypeSelect.querySelector('option[disabled]'); // Получаем опцию по умолчанию
+			viewTypeSelect.value = "0"; // Останавливаем изменение выбора на другой опции
+
+			// Восстанавливаем текст кнопки на "Вид"
+			defaultOption.textContent = "Вид"; // Меняем текст обратно на "Вид"
+		});
+	});
+
     function cleanURL(url) {
 		console.log("Исходный URL:", url); // Логируем исходный URL
 		// Удаляем фрагменты после '#' и убираем возможные параметры после '?', а также сам '#'

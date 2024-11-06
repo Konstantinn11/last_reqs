@@ -11,43 +11,72 @@
 <div style="display: flex; flex-direction: row; justify-content: left; align-items: center; flex-wrap: nowrap; width: 100%;">
     <a style="color: black; font-weight: bold; font-size: 38px; text-align: left; line-height: 50px; white-space: nowrap;">Календарь отпусков на {{year}}</a>
     <div style="display: flex; flex-direction: row; align-items: center; margin-left: 20px; gap: 20px; flex-grow: 1; justify-content: flex-end;">
-        <select name="filtr_otd" id="filtr_otd" style="font-size: 18px; padding: 5px 10px; border: 1px solid rgb(206, 202, 202); color: #808080; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; width: 179px; height: 35px; cursor: pointer;" onchange="updateYearDropdown()">
-            <option value="0" disabled selected>Выберите отдел</option>
+        <div class="flex-container">
+		<select name="filtr_otd" id="filtr_otd" style="font-size: 18px; padding: 5px 10px; border: 1px solid rgb(206, 202, 202); color: #808080; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; width: 140px; height: 35px; cursor: pointer;" onchange="updateYearDropdown()">
+            <option value="0" disabled selected>Отдел</option>
             {% for otd in otds_for_choise %}
                 <option value="{{ otd }}" {% if otd == current_otd %}selected{% endif %}>{{ otd }}</option>
             {% endfor %}
+			{% if request.user.get_full_name == key or request.user.get_full_name in bosses %}
             <option value="0" {% if current_otd == 0 %}selected{% endif %}>Все отделы</option>
+			{% endif %}
         </select>
 
-        <select id="filtr_year" name="filtr_year" style="font-size: 18px; padding: 5px 10px; border: 1px solid rgb(206, 202, 202); color: #808080; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; width: 169px; height: 35px; cursor: pointer;" onchange="updateFilters()">
-            <option value="0" disabled selected>Выберите год</option>
+        <select id="filtr_year" name="filtr_year" style="font-size: 18px; padding: 5px 10px; border: 1px solid rgb(206, 202, 202); color: #808080; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; width: 120px; height: 35px; cursor: pointer;" onchange="updateFilters()">
+            <option value="0" disabled selected>Год</option>
             <option value="2023">2023</option>
             <option value="2024">2024</option>
             <option value="2025">2025</option>
         </select>
 
-        <select id="viewType" name="viewType" style="font-size: 18px; padding: 5px 10px; border: 1px solid rgb(206, 202, 202); color: #808080; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; width: 148px; height: 35px; cursor: pointer;" onchange="redirectToView()">
+        <select id="viewType" name="viewType" style="font-size: 18px; padding: 5px 10px; border: 1px solid rgb(206, 202, 202); color: #808080; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; width: 120px; height: 35px; cursor: pointer;" onchange="redirectToView()">
             <option value="0" disabled selected>Вид</option>
             <option value="current">Календарь</option>
             <option value="custom">График: дни</option>
         </select>
 
-        <select id="actionSelect" name="actionSelect" style="font-size: 18px; padding: 5px 10px; border: 1px solid rgb(206, 202, 202); color: #808080; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; width: 127px; height: 35px; cursor: pointer;">
+        {% if request.user.get_full_name == key or request.user.get_full_name in bosses %}
+		<select id="actionSelect" name="actionSelect" style="font-size: 18px; padding: 5px 10px; border: 1px solid rgb(206, 202, 202); color: #808080; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; width: 170px; height: 35px; cursor: pointer;">
             <option value="" disabled selected>Экспорт</option>
             <option value="export">Лист ознакомления</option>
             <option value="excel">Файл Excel</option>
         </select>
+		{% endif %}
+		</div>
     </div>
 </div>
 
 <div style="display: flex; flex-direction: row; justify-content: left; align-items: center; font-family: 'Calibri'; font-style: normal; font-weight: 400; line-height: 22px; font-size: 18px; color: #808080;">
     Параметры фильтрации: отдел<span style="margin-left: 2px; color: #20c997;">&nbsp;{% if otd == 0%}Все отделы{% else %}{{ otd }}{% endif %},&nbsp;</span>год<span style="color: #20c997;">&nbsp;{{ year }}</span>.
-	{% if otd != 0 %}
-		<a href="{% url 'vac_2' 2024 0 %}" style="margin-left: 15px; color: #20c997; cursor: pointer; text-decoration: underline;">Сбросить все фильтры</a>
-	{% endif %}
 </div>
 
 <script>
+	document.addEventListener("DOMContentLoaded", function() {
+		const yearSelect = document.getElementById("filtr_year");
+
+		// Устанавливаем всегда текст "Выберите год" в качестве отображаемого
+		yearSelect.addEventListener("change", function() {
+			const defaultOption = yearSelect.querySelector('option[disabled]'); // Получаем опцию по умолчанию
+			yearSelect.value = "0"; // Останавливаем изменение выбора на другой опции
+
+			// Восстанавливаем текст кнопки на "Выберите год"
+			defaultOption.textContent = "Год"; // Меняем текст обратно на "Выберите год"
+		});
+	});
+
+	document.addEventListener("DOMContentLoaded", function() {
+		const viewTypeSelect = document.getElementById("viewType");
+
+		// Устанавливаем всегда текст "Вид" в качестве отображаемого
+		viewTypeSelect.addEventListener("change", function() {
+			const defaultOption = viewTypeSelect.querySelector('option[disabled]'); // Получаем опцию по умолчанию
+			viewTypeSelect.value = "0"; // Останавливаем изменение выбора на другой опции
+
+			// Восстанавливаем текст кнопки на "Вид"
+			defaultOption.textContent = "Вид"; // Меняем текст обратно на "Вид"
+		});
+	});
+
     document.addEventListener('DOMContentLoaded', function () {
 		// Получаем все ссылки на странице
 		const links = document.querySelectorAll('a');
@@ -389,6 +418,15 @@
 
 {% block content %}
 <style>
+	.flex-container {
+		display: flex;
+		flex-direction: row;
+		justify-content: flex-start;
+		align-items: center;
+		gap: 20px;
+		width: 100%;
+	}
+	
 	#filtr_otd {
 		background-image: url("{% static 'filter_alt.png' %}"), url("{% static 'arrow_drop.png' %}");
 		background-position: left 5px center, right 5px center;
@@ -601,6 +639,13 @@
 	let data = JSON.parse("{{json_data|escapejs}}");
 	let vacs = JSON.parse("{{json_data_vacs|escapejs}}");
 	
+	const bosses = JSON.parse('{{ bosses_list|escapejs }}');
+	const currentUser = "{{ current_user_name|escapejs }}";
+
+	function isBoss(userName) {
+        return bosses.includes(userName);
+    }
+	
 	function showCrossData(obj) {
 		console.log(`Вызываем showCrossData: ${obj.id}`);
 		let month = obj.id.split('_')[0].toString().trim();
@@ -759,15 +804,24 @@
 					<td style="text-align: left;">
 						<div style="display: flex; align-items: center;">
 							<div style="width: 15px; height: 15px; background: ${entry.color}; border: 1px solid black; margin-right: 6px;"></div>
-							<div style="color: #15a362; text-decoration: underline;">${entry.name}</div>
+							<a href="#" style="color: #15a362; text-decoration: underline;">${entry.name}</a>
 						</div>
 					</td>
-					<td style="text-align: left;">${entry.department}</td>
-					<td style="text-align: left; font-style: italic; text-decoration: underline; color: #15a362;">
-						<a href="#" style="color: inherit; text-decoration: inherit;">${entry.period}</a>
-					</td>
-				</tr>`;
-			}
+					<td style="text-align: left;">${entry.department}</td>`;
+        
+					// Если пользователь босс, отображаем период как ссылку, иначе как текст
+					if (isBoss(currentUser) || currentUser === entry.name) {
+						content += `<td style="text-align: left; font-style: italic; text-decoration: underline; color: #15a362;">
+							<a href="#" style="color: inherit; text-decoration: inherit;">${entry.period}</a>
+						</td>`;
+					} else {
+						content += `<td style="text-align: left; font-style: italic; color: black;">
+							${entry.period}
+						</td>`;
+					}
+
+					content += `</tr>`;
+				}
 			content += `</tbody></table>`;
 		} else {
 			content = `<div style="font-size: 22px; text-align: left;">Не найдено отпусков за <strong>${formattedDate}</strong></div>`;

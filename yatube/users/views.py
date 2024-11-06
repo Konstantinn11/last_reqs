@@ -435,6 +435,9 @@ def vac_2(request, year, otd):
         'Константин Мишуков' : [305, 306, 307],
     }
 
+    bosses_list = list(bosses.keys())
+    current_user_name = request.user.get_full_name()
+
     if request.user.get_full_name() not in bosses.keys():
         otd_id = User_info.objects.filter(user_id=request.user.id)[0].otd_number_id
         otd = int(Unit.objects.filter(id=otd_id)[0].description)
@@ -584,6 +587,8 @@ def vac_2(request, year, otd):
 
          'show_button': True,
          'show_add_leave_button': True,
+         'bosses_list': json.dumps(bosses_list),
+         'current_user_name': current_user_name,
         }
     )
 
