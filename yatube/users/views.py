@@ -589,6 +589,7 @@ def vac_2(request, year, otd):
          'show_add_leave_button': True,
          'bosses_list': json.dumps(bosses_list),
          'current_user_name': current_user_name,
+         'navbar_style': 'custom-navbar'
         }
     )
 
@@ -1781,6 +1782,7 @@ def vac_2_dni(request, year, otd):
          'show_add_leave_button': True,
          'bosses_list': json.dumps(bosses_list),
          'current_user_name': current_user_name,
+         'navbar_style': 'custom-navbar'
         }
     )
 
@@ -2012,5 +2014,6 @@ def vac_all(request, year, otd):
          'vacation_start_dates': vacation_start_dates,
 
          'show_button': True,
+         'navbar_style': 'custom-navbar'
         }
     )

@@ -1,7 +1,7 @@
 <style type="text/css"> 
 	h4 {
 		margin-top: 8px;
-		color: #808080;
+		color: black;
 		font-family: 'Calibri';
 		font-style: normal;
 		font-weight: 700;
@@ -30,12 +30,26 @@
 		margin: 2px auto;
 	}
 	.circle {background: #01A86B; width: 15px; height: 15px; border-radius: 50%; margin-right: 15px; margin-top: 4px; margin-left: 5px;}
+
+	.aside {
+		background: #E6E6E6;
+		box-shadow: 0px 0px 7px rgba(0, 0, 0, 0.2);
+		padding: 1em;
+		text-align: center;
+		overflow-y: auto;
+		height: calc(100vh - 70px);
+	}
+
+	.custom-aside {
+		background: #f4f4f4;; /* Измененный фон */
+		box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+	}
 </style>
 
 {% load static %}
 {% load user_filters %}
 {% with request.resolver_match.view_name as view_name %}
-	<aside class="aside" style="margin: 4px; border-radius: 10px; width: 400px;">
+	<aside class="aside custom-aside" style="margin: 4px; border-radius: 10px; width: 400px;">
 		<div style="display: flex; flex-direction: row; flex-wrap: nowrap; justify-content: center; align-items: center; margin: 5px;">
 			<h4>Отпуска сотрудников</h4>
 			<a class="btn sib" style="background: #15a362; width: 220px; color: white; font-size: 16px;" href="#" onclick="openFormCreateVac(this)">
@@ -46,8 +60,8 @@
 			</a>
 		</div>
 		<div style="display: flex; flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: center; margin: 5px;">
-		<a class="all_vac" style="color: #808080; cursor: pointer; margin: 5px;" onclick="showAllVacs(this)">Все отпуска ({{len_vacations}})</a>
-		<a class="cross_vac" style="color: #808080; cursor: pointer; margin: 5px;" onclick="showCrossVacs(this)">Пересечения ({{len_cross_vacations}})</a>
+		<a class="all_vac" style="color: black; cursor: pointer; margin: 5px;" onclick="showAllVacs(this)">Все отпуска ({{len_vacations}})</a>
+		<a class="cross_vac" style="color: black; cursor: pointer; margin: 5px;" onclick="showCrossVacs(this)">Пересечения ({{len_cross_vacations}})</a>
 		</div>
 		
 		{% if view_name != 'vacations_start' %}

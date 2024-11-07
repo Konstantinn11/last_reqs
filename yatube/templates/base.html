@@ -167,12 +167,12 @@
     /* Стиль для кнопки закрытия */
     .close-btn {
         position: absolute;
-        top: -7px;
-        right: -37px;
+        top: -9px;
+        right: -39px;
         font-size: 40px;
-        font-weight: bold;
+        font-weight: normal;
         cursor: pointer;
-        color: #333;
+        color: #f4f4f4;
         background: transparent;
         border: none;
         opacity: 0;
@@ -251,6 +251,22 @@
         cursor: pointer;
         font-size: 20px;
     }
+
+    .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5); /* Полупрозрачный черный фон */
+        z-index: 900; /* Меньше, чем у info-block, но больше, чем у основного контента */
+        display: none; /* Скрыто по умолчанию */
+    }
+
+    /* Показ overlay при открытии info-block */
+    #info-block.open ~ .overlay {
+        display: block;
+    }
 </style>
 
 {% load static %}
@@ -272,7 +288,7 @@
                 <div class="preloader__item"></div>
             </div>
         </div>
-        {% include 'includes/nav.html' with show_button=show_button show_add_leave_button=show_add_leave_button %}
+        {% include 'includes/nav.html' with show_button=show_button show_add_leave_button=show_add_leave_button navbar_style=navbar_style %}
         <div id="info-block" class="info-block">
             <a href="{% url 'vac_all' year=2024 otd=0 %}">
                 <img style="height: 45px; margin-right: 100px;" src={% static "logo_ya_removebg.png" %}>
@@ -336,63 +352,94 @@
             </main> 
         </div>
         <!--{% include 'includes/footer.html' %}-->
+        <div id="overlay" class="overlay"></div>
         <script>
             window.onload = function() {
                 document.body.classList.add('loaded_hiding');
                 window.setTimeout(function() {
                     document.body.classList.add('loaded');
                     document.body.classList.remove('loaded_hiding');
-                }, 500)
-            }
+                }, 500);
+            };
 
             document.addEventListener('DOMContentLoaded', () => {
-            const button = document.getElementById('add-leave-button');
-            const dropdown = document.getElementById('leave-dropdown');
+                const button = document.getElementById('add-leave-button');
+                const dropdown = document.getElementById('leave-dropdown');
 
-            // Проверка существования кнопки для избежания ошибок
-            if (button) {
-                button.addEventListener('click', (event) => {
-                    event.preventDefault(); // Предотвращаем переход по ссылке
-                    
-                    // Переключение видимости выпадающего списка
-                    dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+                // Проверка существования кнопки для избежания ошибок
+                if (button) {
+                    button.addEventListener('click', (event) => {
+                        event.preventDefault(); // Предотвращаем переход по ссылке
+                        
+                        // Переключение видимости выпадающего списка
+                        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
 
-                    // Позиционирование выпадающего списка по центру под кнопкой
-                    const buttonRect = button.getBoundingClientRect();
-                    const dropdownWidth = dropdown.offsetWidth;
+                        // Позиционирование выпадающего списка по центру под кнопкой
+                        const buttonRect = button.getBoundingClientRect();
+                        const dropdownWidth = dropdown.offsetWidth;
 
-                    dropdown.style.top = `${buttonRect.bottom + window.scrollY +20}px`;
-                    dropdown.style.left = `${buttonRect.left + window.scrollX + (buttonRect.width - dropdownWidth) / 2}px`;
-                });
-            }
+                        dropdown.style.top = `${buttonRect.bottom + window.scrollY + 20}px`;
+                        dropdown.style.left = `${buttonRect.left + window.scrollX + (buttonRect.width - dropdownWidth) / 2}px`;
+                    });
+                }
 
-            // Скрытие выпадающего списка при клике вне его области
-            document.addEventListener('click', (event) => {
-                if (!button.contains(event.target) && !dropdown.contains(event.target)) {
-                    dropdown.style.display = 'none';
+                // Скрытие выпадающего списка при клике вне его области
+                document.addEventListener('click', (event) => {
+                    if (button && dropdown && !button.contains(event.target) && !dropdown.contains(event.target)) {
+                        dropdown.style.display = 'none';
                     }
                 });
-            });
 
-            document.getElementById('toggle-info-block').addEventListener('click', function(e) {
-                e.preventDefault();  // Чтобы не было перехода по ссылке
-                document.getElementById('info-block').classList.toggle('open');
-            });
+                // Обработка показа и скрытия info-block и overlay
+                const toggleButton = document.getElementById('toggle-info-block');
+                const infoBlock = document.getElementById('info-block');
+                const overlay = document.getElementById('overlay');
+                const closeButton = document.getElementById('close-info');
 
-            // Для закрытия блока по кнопке внутри него
-            document.getElementById('close-info').addEventListener('click', function() {
-                document.getElementById('info-block').classList.remove('open');
+                if (toggleButton) {
+                    toggleButton.addEventListener('click', function(e) {
+                        e.preventDefault(); // Чтобы не было перехода по ссылке
+                        infoBlock.classList.toggle('open');  // Показ или скрытие info-block
+                        overlay.classList.toggle('open');    // Показ или скрытие overlay
+                    });
+                }
+
+                // Закрытие info-block по кнопке "×" внутри него
+                if (closeButton) {
+                    closeButton.addEventListener('click', function() {
+                        infoBlock.classList.remove('open');
+                        overlay.classList.remove('open');
+                    });
+                }
+
+                // Закрытие info-block при клике вне его области
+                document.addEventListener('click', function(event) {
+                    if (infoBlock.classList.contains('open') &&
+                        !infoBlock.contains(event.target) &&
+                        !toggleButton.contains(event.target)) {
+                        infoBlock.classList.remove('open');
+                        overlay.classList.remove('open');
+                    }
+                });
+
+                // Дополнительно: Закрытие info-block при клике на overlay
+                if (overlay) {
+                    overlay.addEventListener('click', function() {
+                        infoBlock.classList.remove('open');
+                        overlay.classList.remove('open');
+                    });
+                }
             });
 
             function toggleSubMenuBase() {
-            var subMenu = document.getElementById("sub-menu-base");
-            var arrow = document.getElementById("arrow");
+                var subMenu = document.getElementById("sub-menu-base");
+                var arrow = document.getElementById("arrow");
 
-            // Тоггл класса для открытия/закрытия меню
-            subMenu.classList.toggle("open");
-            
-            // Поворачиваем стрелку
-            arrow.classList.toggle("arrow-up");
+                // Тоггл класса для открытия/закрытия меню
+                subMenu.classList.toggle("open");
+
+                // Поворачиваем стрелку
+                arrow.classList.toggle("arrow-up");
             }
 
             function showLoader(button) {

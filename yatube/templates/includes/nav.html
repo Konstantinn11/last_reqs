@@ -8,18 +8,30 @@
 	a:hover .menu-icon {
         filter: brightness(0) saturate(100%) invert(42%) sepia(76%) saturate(231%) hue-rotate(129deg) brightness(93%) contrast(101%);
     }
+
+	.navbar {
+		background: #E6E6E6;
+	}
+
+	.navbar.custom-navbar {
+		background: #f4f4f4;
+		box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+	}
 </style>
 {% load static %}
 {% load user_filters %}
 {% with request.resolver_match.view_name as view_name %}
-<nav class="navbar navbar-expand-md" style="font-weight: bold; background: #E6E6E6;">
+<nav class="navbar navbar-expand-md {% if navbar_style %}{{ navbar_style }}{% endif %}" style="font-weight: bold;">
 	<div class="navbar-collapse collapse w-100 order-1 order-md-0 dual-collapse2">
 		{% if show_add_leave_button %}
 				<a id="toggle-info-block">
 					<img class="menu-icon" style="height: 40px; width: 40px; display: flex; align-items: center; justify-content: center; margin-left: 4px; cursor: pointer;" src="{% static 'menu.svg' %}">
 				</a>
 		{% endif %}
-		<img style="height: 45px; margin-left: 30px; margin-right: 100px;" src={% static "logo_ya.png" %}>
+		<img 
+			style="height: 45px; margin-left: 30px; margin-right: 100px;" 
+			src="{% if navbar_style == 'custom-navbar' %}{% static 'logo_ya_removebg.png' %}{% else %}{% static 'logo_ya.png' %}{% endif %}"
+			alt="Логотип">
 		<ul class="navbar-nav mr-auto">
 			{% if page_name %}
 				<div class="all_flex">
