@@ -35,7 +35,7 @@ urlpatterns = [
     path('vacations/vac_2_dni/<int:year>/<int:otd>/', views.vac_2_dni, name='vac_2_dni'),
     path('vacations/add_new_vac/<int:otd>/<int:day_s>/<int:month_s>/<int:year_s>/<int:long>/<int:day_e>/<int:month_e>/<int:user_id>/', views.add_new_vac, name='add_new_vac'),
     path('vacations/vac_edit/<int:otd>/<int:day_s>/<int:month_s>/<int:year_s>/<int:long>/<int:day_e>/<int:month_e>/<int:user_id>/<int:vac_id>/', views.vac_edit, name='vac_edit'),
-    path('vac_all/<int:year>/<int:otd>/', views.vac_all, name='vac_all'),
+    path('vac_all/<int:otd>/', views.vac_all, name='vac_all'),
 
     path('backup_base/', views.backup_base, name='backup_base'),
     path('backup_files/', views.backup_files, name='backup_files'),
