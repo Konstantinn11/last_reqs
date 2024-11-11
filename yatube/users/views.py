@@ -522,10 +522,13 @@ def vac_2(request, year, otd):
             for m, d in m_d.items():
                 for day in d:
                     month_number = get_key_from_dict_by_value(month_num_str, m)
-
                     date = today.replace(year=int(y), month=month_number, day=day)
+                    
+                    # Проверка, что праздничный день попадает в диапазон отпуска
                     if date >= vac.day_start.date() and date <= vac.day_end.date():
-                        vacations_by_user[vac.user.get_full_name()]['sum'] -= 1
+                        # Вычитание только если праздник не попадает на выходной день
+                        if date.weekday() < 5:  # Понедельник-пятница (0-4)
+                            vacations_by_user[vac.user.get_full_name()]['sum'] -= 1
 
     for month, days in month_all.items():
         for week, days_in_week in days.items():
@@ -1715,10 +1718,13 @@ def vac_2_dni(request, year, otd):
             for m, d in m_d.items():
                 for day in d:
                     month_number = get_key_from_dict_by_value(month_num_str, m)
-
                     date = today.replace(year=int(y), month=month_number, day=day)
+                    
+                    # Проверка, что праздничный день попадает в диапазон отпуска
                     if date >= vac.day_start.date() and date <= vac.day_end.date():
-                        vacations_by_user[vac.user.get_full_name()]['sum'] -= 1
+                        # Вычитание только если праздник не попадает на выходной день
+                        if date.weekday() < 5:  # Понедельник-пятница (0-4)
+                            vacations_by_user[vac.user.get_full_name()]['sum'] -= 1
 
     for month, days in month_all.items():
         for week, days_in_week in days.items():
@@ -1953,10 +1959,13 @@ def vac_all(request, year, otd):
             for m, d in m_d.items():
                 for day in d:
                     month_number = get_key_from_dict_by_value(month_num_str, m)
-
                     date = today.replace(year=int(y), month=month_number, day=day)
+                    
+                    # Проверка, что праздничный день попадает в диапазон отпуска
                     if date >= vac.day_start.date() and date <= vac.day_end.date():
-                        vacations_by_user[vac.user.get_full_name()]['sum'] -= 1
+                        # Вычитание только если праздник не попадает на выходной день
+                        if date.weekday() < 5:  # Понедельник-пятница (0-4)
+                            vacations_by_user[vac.user.get_full_name()]['sum'] -= 1
 
     for month, days in month_all.items():
         for week, days_in_week in days.items():
