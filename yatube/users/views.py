@@ -30,44 +30,13 @@ import shutil
 import os
 import zipfile
 from corresp.models import Corresp
+from users.vacation_data import holidays, some_colors, month_num_str, special_work_days, bosses, months_ru, color_cycle 
 
 def vac_access_check(request):
     return get_object_or_404(User_info, user_id=request.user.id).vacs_access
 
 def user_access_check(request):
     return get_object_or_404(User_info, user_id=request.user.id).user_access
-
-holidays = [
-    dt.datetime(2023, 1, 1).date(), dt.datetime(2023, 1, 2).date(),
-    dt.datetime(2023, 1, 3).date(), dt.datetime(2023, 1, 4).date(),
-    dt.datetime(2023, 1, 5).date(), dt.datetime(2023, 1, 6).date(),
-    dt.datetime(2023, 1, 7).date(), dt.datetime(2023, 1, 8).date(),
-    dt.datetime(2023, 2, 23).date(), dt.datetime(2023, 2, 24).date(),
-    dt.datetime(2023, 3, 8).date(), dt.datetime(2023, 5, 1).date(),
-    dt.datetime(2023, 5, 8).date(), dt.datetime(2023, 5, 9).date(),
-    dt.datetime(2023, 6, 12).date(),
-    dt.datetime(2023, 11, 6).date(), dt.datetime(2023, 12, 31).date(),
-    dt.datetime(2024, 1, 1).date(), dt.datetime(2024, 1, 2).date(),
-    dt.datetime(2024, 1, 3).date(), dt.datetime(2024, 1, 4).date(),
-    dt.datetime(2024, 1, 5).date(), dt.datetime(2024, 1, 6).date(),
-    dt.datetime(2024, 1, 7).date(), dt.datetime(2024, 1, 8).date(),
-    dt.datetime(2024, 2, 23).date(), dt.datetime(2024, 3, 8).date(),
-    dt.datetime(2024, 4, 29).date(), dt.datetime(2024, 4, 30).date(),
-    dt.datetime(2024, 5, 1).date(), dt.datetime(2024, 5, 9).date(),
-    dt.datetime(2024, 5, 10).date(), dt.datetime(2024, 6, 12).date(),
-    dt.datetime(2024, 11, 4).date(), dt.datetime(2024, 12, 30).date(),
-    dt.datetime(2024, 12, 31).date(), dt.datetime(2025, 1, 1).date(),
-    dt.datetime(2025, 1, 2).date(), dt.datetime(2025, 1, 3).date(),
-    dt.datetime(2025, 1, 4).date(), dt.datetime(2025, 1, 5).date(), 
-    dt.datetime(2025, 1, 6).date(), dt.datetime(2025, 1, 7).date(),
-    dt.datetime(2025, 1, 8).date(), dt.datetime(2025, 2, 23).date(),
-    dt.datetime(2025, 3, 8).date(), dt.datetime(2025, 5, 1).date(),
-    dt.datetime(2025, 5, 2).date(), dt.datetime(2025, 5, 8).date(),
-    dt.datetime(2025, 5, 9).date(), dt.datetime(2025, 6, 12).date(),
-    dt.datetime(2025, 6, 13).date(), dt.datetime(2025, 11, 3).date(),
-    dt.datetime(2025, 11, 4).date(), dt.datetime(2025, 12, 31).date(),
-]
-
 
 def some_count(request):
 
@@ -273,12 +242,6 @@ def del_vac_by_drop(request, otd, user_name, day):
     if not vac_access_check(request):
         return render(request, 'no_rights.html',)
 
-    bosses = {
-        'Николай Емельянов': [305, 306, 307],
-        'Руслан Магомедов': [305, 306, 307],
-        'Константин Мишуков' : [305, 306, 307],
-    }
-
     year = day.split('-')[0]
     f_n = user_name.split(' ')[0]
     l_n = user_name.split(' ')[1]
@@ -380,60 +343,10 @@ def vac_2(request, year, otd):
     if not vac_access_check(request):
         return render(request, 'no_rights.html',)
 
-    holidays = {
-        2022: {
-            'Январь': [1], 'Февраль': [23], 'Март': [8],
-            'Апрель': [], 'Май': [1, 9], 'Июнь': [],
-            'Июль': [], 'Август': [], 'Сентябрь': [],
-            'Октябрь': [], 'Ноябрь': [4], 'Декабрь': [31],
-        },
-        2023: {
-            'Январь': [1, 2, 3, 4, 5, 6, 7, 8], 'Февраль': [23, 24], 'Март': [8],
-            'Апрель': [], 'Май': [1, 8, 9], 'Июнь': [12],
-            'Июль': [], 'Август': [], 'Сентябрь': [],
-            'Октябрь': [], 'Ноябрь': [6], 'Декабрь': [31],
-        },
-        2024: {
-            'Январь': [1, 2, 3, 4, 5, 6, 7, 8], 'Февраль': [23], 'Март': [8],
-            'Апрель': [29, 30], 'Май': [1, 9, 10], 'Июнь': [12],
-            'Июль': [], 'Август': [], 'Сентябрь': [],
-            'Октябрь': [], 'Ноябрь': [4], 'Декабрь': [30, 31],
-        },
-        2025: {
-            'Январь': [1, 2, 3, 4, 5, 6, 7, 8], 'Февраль': [23], 'Март': [8],
-            'Апрель': [], 'Май': [1, 2, 8, 9], 'Июнь': [12, 13],
-            'Июль': [], 'Август': [], 'Сентябрь': [],
-            'Октябрь': [], 'Ноябрь': [3, 4], 'Декабрь': [31],
-        },
-
-    }
-    special_work_days = [
-        dt.datetime(2024, 4, 27).date(),
-        dt.datetime(2024, 11, 2).date(),
-        dt.datetime(2024, 12, 28).date(),
-        dt.datetime(2025, 11, 1).date(),
-    ]
-    month_num_str = {
-        1: 'Январь', 2: 'Февраль', 3: 'Март',
-        4: 'Апрель', 5: 'Май', 6: 'Июнь',
-        7: 'Июль', 8: 'Август', 9: 'Сентябрь',
-        10: 'Октябрь', 11: 'Ноябрь', 12: 'Декабрь',
-    }
-    some_colors = ["#B8860B", "#FF00FF", "#8A2BE2", "#00BFFF", "#F0E68C", "#7FFFD4", "#FFA500", "#20B2AA", "#FF96B4", "#00FA9A", "#FA8072",
-        "#B8860B", "#FF00FF", "#8A2BE2", "#00BFFF", "#F0E68C", "#7FFFD4", "#FFA500", "#20B2AA", "#FF96B4", "#00FA9A", "#FA8072"]
-
-
     if year == 0:
         year = dt.datetime.today().year
     today = dt.datetime.today().date()
     month_all = full_year(year)
-
-
-    bosses = {
-        'Николай Емельянов': [305, 306, 307],
-        'Руслан Магомедов': [305, 306, 307],
-        'Константин Мишуков' : [305, 306, 307],
-    }
 
     bosses_list = list(bosses.keys())
     current_user_name = request.user.get_full_name()
@@ -475,7 +388,8 @@ def vac_2(request, year, otd):
 
     for vac in vacations:
         if vac.user.get_full_name() not in users_colors.keys():
-            users_colors[vac.user.get_full_name()] = some_colors.pop()
+            # Получаем следующий цвет из цикла
+            users_colors[vac.user.get_full_name()] = next(color_cycle)
 
     # [{'vac': vac, 'range': range, 'color': color, }]
     cross_vacations = get_cross_vacations(vacations, users_colors, month_num_str)
@@ -706,51 +620,12 @@ def vacations(request, year, otd):
                          'мая': '05', 'июня': '06', 'июля': '07', 'августа': '08',
                          'сентября': '09', 'октября': '10', 'ноября': '11', 'декабря': '12',}
     years = [2023, 2024]
-    bosses = {
-        'Николай Емельянов': [305, 306, 307],
-        'Руслан Магомедов': [305, 306, 307],
-        'Константин Мишуков' : [305, 306, 307],
-    }
     try:
         otd_id = User_info.objects.filter(user_id=request.user.id)[0].otd_number_id
         otd = int(Unit.objects.filter(id=otd_id)[0].description)
     except:
         otd = 0
     
-
-    holidays = [
-        dt.datetime(2023,1,1).date(), dt.datetime(2023,1,2).date(), dt.datetime(2023,1,3).date(),
-        dt.datetime(2023,1,4).date(), dt.datetime(2023,1,5).date(), dt.datetime(2023,1,6).date(),
-        dt.datetime(2023,1,7).date(), dt.datetime(2023,1,8).date(), dt.datetime(2023,2,23).date(),
-        dt.datetime(2023,2,24).date(), dt.datetime(2023,3,8).date(), dt.datetime(2023,5,1).date(),
-        dt.datetime(2023,5,8).date(), dt.datetime(2023,5,9).date(), dt.datetime(2023,6,12).date(),
-        dt.datetime(2023,11,6).date(), dt.datetime(2023,12,31).date(),
-        dt.datetime(2024, 1, 1).date(), dt.datetime(2024, 1, 2).date(),
-        dt.datetime(2024, 1, 3).date(), dt.datetime(2024, 1, 4).date(),
-        dt.datetime(2024, 1, 5).date(), dt.datetime(2024, 1, 6).date(),
-        dt.datetime(2024, 1, 7).date(), dt.datetime(2024, 1, 8).date(),
-        dt.datetime(2024, 2, 23).date(), dt.datetime(2024, 3, 8).date(),
-        dt.datetime(2024, 4, 29).date(), dt.datetime(2024, 4, 30).date(),
-        dt.datetime(2024, 5, 1).date(), dt.datetime(2024, 5, 9).date(),
-        dt.datetime(2024, 5, 10).date(), dt.datetime(2024, 6, 12).date(),
-        dt.datetime(2024, 11, 4).date(), dt.datetime(2024, 12, 30).date(),
-        dt.datetime(2024, 12, 31).date(), dt.datetime(2025, 1, 1).date(),
-        dt.datetime(2025, 1, 2).date(), dt.datetime(2025, 1, 3).date(),
-        dt.datetime(2025, 1, 4).date(), dt.datetime(2025, 1, 5).date(), 
-        dt.datetime(2025, 1, 6).date(), dt.datetime(2025, 1, 7).date(),
-        dt.datetime(2025, 1, 8).date(), dt.datetime(2025, 2, 23).date(),
-        dt.datetime(2025, 3, 8).date(), dt.datetime(2025, 5, 1).date(),
-        dt.datetime(2025, 5, 2).date(), dt.datetime(2025, 5, 8).date(),
-        dt.datetime(2025, 5, 9).date(), dt.datetime(2025, 6, 12).date(),
-        dt.datetime(2025, 6, 13).date(), dt.datetime(2025, 11, 3).date(),
-        dt.datetime(2025, 11, 4).date(), dt.datetime(2025, 12, 31).date(),
-    ]
-    special_work_days = [
-        dt.datetime(2024, 4, 27).date(),
-        dt.datetime(2024, 11, 2).date(),
-        dt.datetime(2024, 12, 28).date(),
-        dt.datetime(2025, 11, 1).date(),
-    ]
     return render(
         request,
         'vacations_all.html',
@@ -904,35 +779,6 @@ def user_space(request, user_id):
         note.save()
         return redirect('user_space', request.user.id)
 
-    #print(unreaded)
-    today = dt.datetime.today().date
-    #  вставка из vac_2
-    holidays = {
-        2024: {
-            'Январь': [1, 2, 3, 4, 5, 6, 7, 8], 'Февраль': [23], 'Март': [8],
-            'Апрель': [29, 30], 'Май': [1, 9, 10], 'Июнь': [12],
-            'Июль': [], 'Август': [], 'Сентябрь': [],
-            'Октябрь': [], 'Ноябрь': [4], 'Декабрь': [30, 31],
-        },
-        2025: {
-            'Январь': [1, 2, 3, 4, 5, 6, 7, 8], 'Февраль': [23], 'Март': [8],
-            'Апрель': [], 'Май': [1, 2, 8, 9], 'Июнь': [12, 13],
-            'Июль': [], 'Август': [], 'Сентябрь': [],
-            'Октябрь': [], 'Ноябрь': [3, 4], 'Декабрь': [31],
-        },
-
-    }
-    special_work_days = [
-        dt.datetime(2024, 4, 27).date(),
-        dt.datetime(2024, 11, 2).date(),
-        dt.datetime(2024, 12, 28).date(),
-    ]
-    month_num_str = {
-        1: 'Январь', 2: 'Февраль', 3: 'Март',
-        4: 'Апрель', 5: 'Май', 6: 'Июнь',
-        7: 'Июль', 8: 'Август', 9: 'Сентябрь',
-        10: 'Октябрь', 11: 'Ноябрь', 12: 'Декабрь',
-    }
     some_colors = ["#FA8072"]
     year = dt.datetime.today().year
     today = dt.datetime.today().date()
@@ -942,7 +788,8 @@ def user_space(request, user_id):
 
     for vac in vacations:
         if vac.user.get_full_name() not in users_colors.keys():
-            users_colors[vac.user.get_full_name()] = some_colors.pop()
+            # Получаем следующий цвет из цикла
+            users_colors[vac.user.get_full_name()] = next(color_cycle)
 
     # [{'vac': vac, 'range': range, 'color': color, }]
     cross_vacations = get_cross_vacations(vacations, users_colors, month_num_str)
@@ -1352,7 +1199,6 @@ def vacations_by_user(request, year, otd):
         return render(request, 'no_rights.html',)
 
     vacations = Vacation.objects.filter(user_id=request.user.id, year=str(year))
-    bosses = {'Николай Емельянов': [305, 306, 307], 'Руслан Магомедов': [305, 306, 307], 'Константин Мишуков' : [305, 306, 307], },
     years = [2023, 2024]
     return render(
         request,
@@ -1386,8 +1232,7 @@ def vacation_new(request, year, otd):
         request,
         'vacation_new.html',
         {'form': form, 'user': request.user, **rights(request), 'otd': otd, 'number': otd, 'year': year,
-        'bosses':{'Николай Емельянов': [305, 306, 307], 'Руслан Магомедов': [305, 306, 307], 'Константин Мишуков' : [305, 306, 307], },
-        'pdf': settings.BASE_DIR + f"/posts/static/users/vacations_{otd}_{year}.pdf", }
+        'bosses': bosses, 'pdf': settings.BASE_DIR + f"/posts/static/users/vacations_{otd}_{year}.pdf", }
     )
 
 @login_required
@@ -1431,12 +1276,6 @@ def vac_edit(request, otd, day_s, month_s, year_s, long: int, day_e, month_e, us
 def vacation_edit(request, year, otd, vac_id):
     if not vac_access_check(request):
         return render(request, 'no_rights.html',)
-
-    bosses = {
-        'Николай Емельянов': [305, 306, 307],
-        'Руслан Магомедов': [305, 306, 307],
-        'Константин Мишуков' : [305, 306, 307],
-    }
 
     vac = get_object_or_404(Vacation, id=vac_id)
     vac.day_start = str(vac.day_start)[:-15]
@@ -1565,71 +1404,21 @@ def vacations_start(request):
     except:
         otd = 0
     year = dt.datetime.today().year
-    bosses = {'Николай Емельянов': [305, 306, 307], 'Константин Мишуков' : [305, 306, 307],}
+    bosses = {'Константин Мишуков' : [305, 306, 307],}
     return render(
         request,
         'vacations_all.html',
         {**rights(request), 'otd': otd, 'bosses': bosses, 'year': year, },
     )
 
-def vac_2_dni(request, year, otd):
+def vac_2_days(request, year, otd):
     if not vac_access_check(request):
         return render(request, 'no_rights.html',)
-
-    holidays = {
-        2022: {
-            'Январь': [1], 'Февраль': [23], 'Март': [8],
-            'Апрель': [], 'Май': [1, 9], 'Июнь': [],
-            'Июль': [], 'Август': [], 'Сентябрь': [],
-            'Октябрь': [], 'Ноябрь': [4], 'Декабрь': [31],
-        },
-        2023: {
-            'Январь': [1, 2, 3, 4, 5, 6, 7, 8], 'Февраль': [23, 24], 'Март': [8],
-            'Апрель': [], 'Май': [1, 8, 9], 'Июнь': [12],
-            'Июль': [], 'Август': [], 'Сентябрь': [],
-            'Октябрь': [], 'Ноябрь': [6], 'Декабрь': [31],
-        },
-        2024: {
-            'Январь': [1, 2, 3, 4, 5, 6, 7, 8], 'Февраль': [23], 'Март': [8],
-            'Апрель': [29, 30], 'Май': [1, 9, 10], 'Июнь': [12],
-            'Июль': [], 'Август': [], 'Сентябрь': [],
-            'Октябрь': [], 'Ноябрь': [4], 'Декабрь': [30, 31],
-        },
-        2025: {
-            'Январь': [1, 2, 3, 4, 5, 6, 7, 8], 'Февраль': [23], 'Март': [8],
-            'Апрель': [], 'Май': [1, 2, 8, 9], 'Июнь': [12, 13],
-            'Июль': [], 'Август': [], 'Сентябрь': [],
-            'Октябрь': [], 'Ноябрь': [3, 4], 'Декабрь': [31],
-        },
-
-    }
-    special_work_days = [
-        dt.datetime(2024, 4, 27).date(),
-        dt.datetime(2024, 11, 2).date(),
-        dt.datetime(2024, 12, 28).date(),
-        dt.datetime(2025, 11, 1).date(),
-    ]
-    month_num_str = {
-        1: 'Январь', 2: 'Февраль', 3: 'Март',
-        4: 'Апрель', 5: 'Май', 6: 'Июнь',
-        7: 'Июль', 8: 'Август', 9: 'Сентябрь',
-        10: 'Октябрь', 11: 'Ноябрь', 12: 'Декабрь',
-    }
-    some_colors = ["#B8860B", "#FF00FF", "#8A2BE2", "#00BFFF", "#F0E68C", "#7FFFD4", "#FFA500", "#20B2AA", "#FF96B4", "#00FA9A", "#FA8072",
-        "#B8860B", "#FF00FF", "#8A2BE2", "#00BFFF", "#F0E68C", "#7FFFD4", "#FFA500", "#20B2AA", "#FF96B4", "#00FA9A", "#FA8072"]
-
-
+    
     if year == 0:
         year = dt.datetime.today().year
     today = dt.datetime.today().date()
     month_all = full_year(year)
-
-
-    bosses = {
-        'Николай Емельянов': [305, 306, 307],
-        'Руслан Магомедов': [305, 306, 307],
-        'Константин Мишуков' : [305, 306, 307],
-    }
 
     bosses_list = list(bosses.keys())
     current_user_name = request.user.get_full_name()
@@ -1671,9 +1460,9 @@ def vac_2_dni(request, year, otd):
 
     for vac in vacations:
         if vac.user.get_full_name() not in users_colors.keys():
-            users_colors[vac.user.get_full_name()] = some_colors.pop()
+            # Забираем следующий цвет из цикла
+            users_colors[vac.user.get_full_name()] = next(color_cycle)
 
-    # [{'vac': vac, 'range': range, 'color': color, }]
     cross_vacations = get_cross_vacations(vacations, users_colors, month_num_str)
 
 
@@ -1683,7 +1472,7 @@ def vac_2_dni(request, year, otd):
         if vac.user.get_full_name() not in vacations_by_user.keys():
             vacations_by_user[vac.user.get_full_name()] = {
                 'color': users_colors[vac.user.get_full_name()],
-                'dates': [],  # {'d': 12.12 -18.12, 'vac_id': vac_id, 'vac_can_redact': vac_can_redact}
+                'dates': [],
                 'sum': 0,
                 'otd': '',
                 'user_id': vac.user_id,
@@ -1698,8 +1487,6 @@ def vac_2_dni(request, year, otd):
         start_date = vac.day_start.date()
         days_count = (vac.day_end.date() - vac.day_start.date()).days + 1  # Количество дней отпуска
         vacations_by_user[vac.user.get_full_name()]['vacation_start_dates'].append((start_date, days_count))
-
-        # vacations_by_user[vac.user.get_full_name()]['sum'] += days_count
 
         vacations_by_user[vac.user.get_full_name()]['dates'].append(
             {'d': f"{vac.day_start.day} {month_num_str[vac.day_start.month][:3]} - {vac.day_end.day} {month_num_str[vac.day_end.month][:3]}",
@@ -1748,8 +1535,6 @@ def vac_2_dni(request, year, otd):
                 month_all[month][week][i] = {'name': days_in_week[i], 'data': data, 'date': date, }
 
     month_all_for_js = copy_dict_for_js(month_all)
-
-    
     
     if year in holidays.keys():
         h_days = holidays[year]
@@ -1760,15 +1545,13 @@ def vac_2_dni(request, year, otd):
     for vac in vacations:
         all_vac_for_js[vac.id] = [str(vac.day_start.date()), str(vac.day_end.date()), vac.how_long, vac.can_redact]
 
-    
     return render(
         request,
-        'vac_grafik_dni.html',
+        'vac_schedule_days.html',
         {**rights(request),
          'today': today,
          'year': year,
          'otd': otd,
-         'pdf': settings.BASE_DIR + f"/posts/static/users/vacations_{otd}_{year}.pdf",
          **month_all,
          'json_data': json.dumps(month_all_for_js),
          'json_data_vacs': json.dumps(all_vac_for_js),
@@ -1798,61 +1581,6 @@ def vac_all(request, otd):
 
     today = dt.datetime.today().date()
     year = today.year
-    
-    holidays = {
-        2022: {
-            'Январь': [1], 'Февраль': [23], 'Март': [8],
-            'Апрель': [], 'Май': [1, 9], 'Июнь': [],
-            'Июль': [], 'Август': [], 'Сентябрь': [],
-            'Октябрь': [], 'Ноябрь': [4], 'Декабрь': [31],
-        },
-        2023: {
-            'Январь': [1, 2, 3, 4, 5, 6, 7, 8], 'Февраль': [23, 24], 'Март': [8],
-            'Апрель': [], 'Май': [1, 8, 9], 'Июнь': [12],
-            'Июль': [], 'Август': [], 'Сентябрь': [],
-            'Октябрь': [], 'Ноябрь': [6], 'Декабрь': [31],
-        },
-        2024: {
-            'Январь': [1, 2, 3, 4, 5, 6, 7, 8], 'Февраль': [23], 'Март': [8],
-            'Апрель': [29, 30], 'Май': [1, 9, 10], 'Июнь': [12],
-            'Июль': [], 'Август': [], 'Сентябрь': [],
-            'Октябрь': [], 'Ноябрь': [4], 'Декабрь': [30, 31],
-        },
-        2025: {
-            'Январь': [1, 2, 3, 4, 5, 6, 7, 8], 'Февраль': [23], 'Март': [8],
-            'Апрель': [], 'Май': [1, 2, 8, 9], 'Июнь': [12, 13],
-            'Июль': [], 'Август': [], 'Сентябрь': [],
-            'Октябрь': [], 'Ноябрь': [3, 4], 'Декабрь': [31],
-        },
-    }
-
-    special_work_days = [
-        dt.datetime(2024, 4, 27).date(),
-        dt.datetime(2024, 11, 2).date(),
-        dt.datetime(2024, 12, 28).date(),
-        dt.datetime(2025, 11, 1).date(),
-    ]
-    
-    month_num_str = {
-        1: 'Январь', 2: 'Февраль', 3: 'Март',
-        4: 'Апрель', 5: 'Май', 6: 'Июнь',
-        7: 'Июль', 8: 'Август', 9: 'Сентябрь',
-        10: 'Октябрь', 11: 'Ноябрь', 12: 'Декабрь',
-    }
-    
-    months_ru = {
-        1: "января", 2: "февраля", 3: "марта", 4: "апреля", 5: "мая", 6: "июня",
-        7: "июля", 8: "августа", 9: "сентября", 10: "октября", 11: "ноября", 12: "декабря"
-    }
-    
-    some_colors = ["#B8860B", "#FF00FF", "#8A2BE2", "#00BFFF", "#F0E68C", "#7FFFD4", "#FFA500", "#20B2AA", "#FF96B4", "#00FA9A", "#FA8072",
-                   "#B8860B", "#FF00FF", "#8A2BE2", "#00BFFF", "#F0E68C", "#7FFFD4", "#FFA500", "#20B2AA", "#FF96B4", "#00FA9A", "#FA8072"]
-
-    bosses = {
-        'Николай Емельянов': [305, 306, 307],
-        'Руслан Магомедов': [305, 306, 307],
-        'Константин Мишуков': [305, 306, 307],
-    }
     
      # Отображаем отпуска без учета года, только те, которые еще актуальны
     if request.user.get_full_name() not in bosses.keys():
@@ -1889,9 +1617,10 @@ def vac_all(request, otd):
         vacation_start_dates.setdefault(vac.user.get_full_name(), []).append(vac.day_start.date())
 
     users_colors = {}
-    for vac in filtered_vacations:
-        if vac.user.get_full_name() not in users_colors:
-            users_colors[vac.user.get_full_name()] = some_colors.pop()
+    for vac in vacations:
+        if vac.user.get_full_name() not in users_colors.keys():
+            # Получаем следующий цвет из цикла
+            users_colors[vac.user.get_full_name()] = next(color_cycle)
 
     cross_vacations = get_cross_vacations(filtered_vacations, users_colors, month_num_str)
 

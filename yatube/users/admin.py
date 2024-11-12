@@ -14,7 +14,7 @@ class User_infoAdmin(admin.ModelAdmin):
         'conf_access',
         'user_access',
     )
-    search_fields = ('user', )
+    search_fields = ('user__username', )
 
 
 admin.site.register(User_info, User_infoAdmin)

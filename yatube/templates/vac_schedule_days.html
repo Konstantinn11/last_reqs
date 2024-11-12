@@ -79,7 +79,8 @@
 		} else if (selectedOtd == "0" && selectedYear != "0") {
 			window.location.href = cleanURL("{% url 'vac_2' 0 0 %}".replace("0/0", selectedYear + "/0"));
 		} else if (selectedOtd == "0" && selectedYear == "0") {
-			window.location.href = cleanURL("{% url 'vac_2' 2024 0 %}"); // Замените на текущий год
+			const currentYear = new Date().getFullYear(); // Получаем текущий год
+			window.location.href = cleanURL("{% url 'vac_2' 2024 0 %}".replace("2024", currentYear)); // Заменяем 2024 на текущий год
 		} else if (selectedYear == "0" && selectedOtd != "0") {
 			alert('Пожалуйста, выберите год.');
 		}
@@ -131,7 +132,7 @@
 			window.location.href = cleanURL("{% url 'vac_2' 0 0 %}".replace("0/0", filters.year + "/" + filters.otd));
 		} else if (viewType === 'custom') {
 			// Переход на график дней с сохранением параметров
-			window.location.href = cleanURL("{% url 'vac_2_dni' 0 0 %}".replace("0/0", filters.year + "/" + filters.otd));
+			window.location.href = cleanURL("{% url 'vac_2_days' 0 0 %}".replace("0/0", filters.year + "/" + filters.otd));
 		}
 	}
 

@@ -294,7 +294,7 @@
                 <img style="height: 45px; margin-right: 100px;" src={% static "logo_ya_removebg.png" %}>
             </a>
             <div style="display: flex; flex-direction: column; position: relative; margin-top: 5px;">
-                <button class="custom-button" type="button" onclick="showLoader(this); location.href='{% url 'vac_2' year=2024 otd=0 %}'">
+                <button class="custom-button" type="button" onclick="handleClick(this);">
                     <img id="vacationIcon" style="height: 30px; margin-right: 15px;" src="{% static 'list.svg' %}"> Графики отпусков
                 </button>
         
@@ -446,6 +446,16 @@
                 if (img) {
                     img.src = "{% static 'load.gif' %}";
                 }
+            }
+
+            function redirectToCurrentYear() {
+                const currentYear = new Date().getFullYear();
+                location.href = `{% url 'vac_2' year=0 otd=0 %}`.replace('0', currentYear);
+            }
+
+            function handleClick(button) {
+                showLoader(button);       // Запускает анимацию загрузки
+                redirectToCurrentYear();  // Перенаправляет на URL с текущим годом
             }
         </script>
     </body>

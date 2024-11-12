@@ -87,7 +87,7 @@
 			
 			{% if user_info.vacs_access %}
 				<div class="div_for_btn">
-					<a class="btn sib" onclick="show_load(this)" href="{% url 'vac_all' year=2024 otd=0 %}"><img class="img_for_btn" src={% static "vacation.png" %}>ОТПУСК</a>
+					<a class="btn sib" onclick="show_load(this)" href="{% url 'vac_all' otd=0 %}"><img class="img_for_btn" src={% static "vacation.png" %}>ОТПУСК</a>
 				</div>
 			{% endif %}
 			<h4>Общие</h4>

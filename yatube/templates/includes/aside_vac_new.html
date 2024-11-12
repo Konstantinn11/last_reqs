@@ -87,13 +87,15 @@
 									{% else %}
 										<a id="{{key}}_{{date.vac_id}}" style="color: #15a362; font-size: 0.875em; text-decoration: underline;" href="#">{{date.d}}</a>
 									{% endif %}
-									<a>,&nbsp;</a>
 								{% else %}
 									{% if request.user.get_full_name in bosses %}
 										<a id="{{key}}_{{date.vac_id}}" style="color: #0a0e0c; font-size: 0.875em; text-decoration: underline;" href="#" onclick="openFormEditVac(this)">{{date.d}}</a>
 									{% else %}
 										<a id="{{key}}_{{date.vac_id}}" style="color: #0a0e0c; font-size: 0.875em; text-decoration: underline;" href="#">{{date.d}}</a>
 									{% endif %}
+								{% endif %}
+								
+								{% if not forloop.last %}
 									<a>,&nbsp;</a>
 								{% endif %}
 							{% endfor %}
