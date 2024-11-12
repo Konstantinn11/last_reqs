@@ -80,7 +80,7 @@ class User_info(models.Model):
     vacs_access = models.BooleanField(
         null=True,
         blank=True,
-        default=False,
+        default=True,
         verbose_name='Доступ к отпускам',
     )
     test_access = models.BooleanField(
