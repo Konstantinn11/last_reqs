@@ -1154,7 +1154,11 @@
 					} else {
 						days[i].childNodes[1].style.background = 'linear-gradient(135deg, #df691a 50%, #4e5d6c 50%, #4e5d6c 100%)';
 						days[i].childNodes[1].style.color = 'white';
-						break;
+						days[i].childNodes[1].style.borderRadius = '5px';
+						days[i].childNodes[1].style.backgroundSize = '28px 28px';
+						days[i].childNodes[1].style.backgroundPosition = 'center';
+						days[i].childNodes[1].style.backgroundRepeat = 'no-repeat';
+                    	break;
 					}
 				}
 			} else {
@@ -1168,6 +1172,7 @@
 						days[i].childNodes[1].style.color = '#808080';							
 					} else {
 						days[i].childNodes[1].style.background = obj.parentElement.childNodes[1].style.background;
+						days[i].childNodes[1].style.color = 'white';
 						break;
 					}
 				}

@@ -160,10 +160,10 @@ EMAIL_FILE_PATH = os.path.join(BASE_DIR, "sent_emails")
 
 POSTS_IN_PAGE = 14
 RIGHTS = {
-    'nikolay.emelyanov',
     'dmitry.mylnikov',
-    'Dmitry.Gerasimov',
     'Konstantin.Mishukov',
+    'yaroslav.bogdanov',
+    'ekaterina.mikheeva',
 }
 STORAGE_RIGHTS = {}
 SADEC_RIGHTS = {}

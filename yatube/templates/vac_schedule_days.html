@@ -1403,44 +1403,5 @@
 			}
 		}						
 	}
-	function filtrByUser(obj) {
-		let days = document.getElementsByName('day');
-		for (let i = 0; i < days.length; i++) {
-			let month = days[i].id.split('_')[0];
-			let week = days[i].id.split('_')[1];
-			let day = days[i].id.split('_')[2];
-			if (Object.entries(data[month][week][day]['data']).length > 1) {
-				for (const [k, v] of Object.entries(data[month][week][day]['data'])) {
-					if (k != obj.textContent) {
-						if (day == 5 | day == 6) {
-							days[i].childNodes[1].style.background = 'rgb(219, 219, 219)';
-						} else {
-							days[i].childNodes[1].style.background = 'transparent';
-						}
-						days[i].childNodes[1].style.color = '#808080';
-						
-					} else {
-						days[i].childNodes[1].style.background = 'linear-gradient(135deg, #df691a 50%, #4e5d6c 50%, #4e5d6c 100%)';
-						days[i].childNodes[1].style.color = 'white';
-						break;
-					}
-				}
-			} else {
-				for (const [k, v] of Object.entries(data[month][week][day]['data'])) {
-					if (k != obj.textContent) {
-						if (day == 5 | day == 6) {
-							days[i].childNodes[1].style.background = 'rgb(219, 219, 219)';
-						} else {
-							days[i].childNodes[1].style.background = 'transparent';
-						}							
-						days[i].childNodes[1].style.color = '#808080';							
-					} else {
-						days[i].childNodes[1].style.background = obj.parentElement.childNodes[1].style.background;
-						break;
-					}
-				}
-			}				
-		}			
-	}		
 </script>
 {% endblock %}
