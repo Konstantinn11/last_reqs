@@ -9,10 +9,8 @@ urlpatterns = [
     path('user_search/', views.user_search, name='user_search'),
     path('users_in_otd/<int:number>/', views.users_in_otd, name='users_in_otd'),
     path('log/', views.log_all, name='log_all'),
-    path('vacations/all/<int:year>/<int:otd>/', views.vacations, name='vacations'),
     path('vacations/new/<int:year>/<int:otd>/', views.vacation_new, name='vacation_new'),
     path('vacations/all/', views.vacations_start, name='vacations_start'),
-    #path('vacations/all/print/<int:year>/<int:otd>/', views.vacations_print, name='vacations_print'),
 
     path('vacations/vacation_edit/<int:year>/<int:otd>/<int:vac_id>/', views.vacation_edit, name='vacation_edit'),
     path('vacations/vacation_delete/<int:otd>/<int:year>/<int:vac_id>/', views.vacation_delete, name='vacation_delete'),
@@ -36,7 +34,7 @@ urlpatterns = [
     path('vacations/add_new_vac/<int:otd>/<int:day_s>/<int:month_s>/<int:year_s>/<int:long>/<int:day_e>/<int:month_e>/<int:user_id>/', views.add_new_vac, name='add_new_vac'),
     path('vacations/vac_edit/<int:otd>/<int:day_s>/<int:month_s>/<int:year_s>/<int:long>/<int:day_e>/<int:month_e>/<int:user_id>/<int:vac_id>/', views.vac_edit, name='vac_edit'),
     path('vac_all/<int:otd>/', views.vac_all, name='vac_all'),
-    path('vac_calendars/', views.vac_calendars, name='vac_calendars'),
+    path('vac_calendars/<int:otd>/', views.vac_calendars, name='vac_calendars'),
 
     path('backup_base/', views.backup_base, name='backup_base'),
     path('backup_files/', views.backup_files, name='backup_files'),

@@ -5,9 +5,6 @@
 	.main_text {
 		margin-left: 10px; padding-left: 10px; color: gray; margin-right: 20px; width: 350px auto; line-height: 40px;
 	}
-	a:hover .menu-icon {
-        filter: brightness(0) saturate(100%) invert(42%) sepia(76%) saturate(231%) hue-rotate(129deg) brightness(93%) contrast(101%);
-    }
 
 	.navbar {
 		background: #E6E6E6;
@@ -25,20 +22,34 @@
 	<div class="navbar-collapse collapse w-100 order-1 order-md-0 dual-collapse2">
 		{% if show_add_leave_button %}
 				<a id="toggle-info-block">
-					<img class="menu-icon" style="height: 40px; width: 40px; display: flex; align-items: center; justify-content: center; margin-left: 4px; cursor: pointer;" src="{% static 'menu.svg' %}">
+					<img class="menu-icon" style="height: 40px; width: 40px; display: flex; align-items: center; justify-content: center; margin-left: 4px; cursor: pointer;" src="{% static 'menu1.svg' %}">
 				</a>
 		{% endif %}
-		<img 
-			style="height: 45px; margin-left: 30px; margin-right: 100px;" 
-			src="{% if navbar_style == 'custom-navbar' %}{% static 'logo_ya_removebg.png' %}{% else %}{% static 'logo_ya.png' %}{% endif %}"
-			alt="Логотип">
+		{% if navbar_style == 'custom-navbar' %}
+			{% if show_vacation_link %}
+				<a style="margin-left: 25px; font-size: 19px; font-weight: normal; color: #15a362; text-decoration: underline; display: inline;" href="{% url 'vac_calendars' 0 %}">
+					Графики отпусков
+				</a>
+				<span style="font-size: 19px; color: #808080; font-weight: normal; display: inline;">
+					&nbsp;/ Единый график, {{ year }} г.
+				</span>
+			{% endif %}
+		{% else %}
+			<img style="height: 45px; margin-left: 30px; margin-right: 100px;"
+				src="{% static 'logo_ya.png' %}" alt="Логотип">
+		{% endif %}
 		<ul class="navbar-nav mr-auto">
-			{% if page_name %}
-				<div class="all_flex">
-					<div class="main_text all_flex" style="font-size: 40px;">
-						{{page_name}}
-					</div>
+			{% if page_noname is not none %}
+			<div class="main_text all_flex" style="font-size: 40px;">
+				{{page_noname}}
+			</div>
+			
+			{% elif page_name %}
+			<div class="all_flex">
+				<div class="main_text all_flex" style="font-size: 40px;">
+					{{page_name}}
 				</div>
+			</div>
 
 			{% elif request.resolver_match.url_name == "user_space" %}
 			<div class="all_flex">

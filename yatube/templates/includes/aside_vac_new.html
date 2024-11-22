@@ -44,6 +44,32 @@
 		background: #f4f4f4;; /* Измененный фон */
 		box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
 	}
+
+	/* Контейнер сотрудника */
+	.employee-container {
+		position: relative;
+		cursor: pointer;
+		border-radius: 5px;
+		transition: background-color 0.3s, border-color 0.3s;
+	}
+
+	/* Наведение на контейнер */
+	.employee-container:hover {
+		background-color: #f9f9f9;
+	}
+
+	/* Скрытие иконки по умолчанию */
+	.hover-icon {
+		display: none;
+		opacity: 0;
+		transition: opacity 0.3s;
+	}
+
+	/* Отображение иконки при наведении на весь контейнер */
+	.employee-container:hover .hover-icon {
+		display: block;
+		opacity: 1;
+	}
 </style>
 
 {% load static %}
@@ -67,14 +93,14 @@
 		{% if view_name != 'vacations_start' %}
 			<div class="all_vacs">
 				{% for key, value in vacations_by_user.items %}
-					<div class="list-group-item list-group-item-action">
+					<div class="list-group-item list-group-item-action employee-container">
 						<div style="display: flex; flex-direction: row; flex-wrap: wrap; justify-content: left; align-items: center;">
 							<div style="width: 15px; height: 15px; background: {{value.color}}; border: 1px solid black; margin-right: 6px;"></div>
 							<a style="color: black" href="#">{{key}}</a>
 							{% if key == request.user.get_full_name or request.user.get_full_name in bosses %}
 								<a id="creat_cur_{{key}}" style="color: black; font-size: 0.875em; text-decoration: underline; margin-left: 10px;" href="#" onclick="openFormCreateVac(this)">
-									<div style="cursor: pointer; justify-content: center; align-items: center;">
-										<img style="height: 20px;" src={% static "trello_plus.png" %}>
+									<div style="cursor: pointer; justify-content: center; align-items: center;" class="hover-icon">
+										<img style="height: 20px;" src={% static "trello_plus.svg" %}>
 									</div>
 								</a>
 							{% endif %}
@@ -137,6 +163,3 @@
 		}
 	</script>
 {% endwith %}
-
-
-

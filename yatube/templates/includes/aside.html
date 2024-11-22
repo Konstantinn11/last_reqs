@@ -37,13 +37,11 @@
 	.circle_trans {background: transparent;}
 	.mini-circle {background: #01A86B; width: 15px; height: 15px; border-radius: 50%; margin-right: 5px; margin-left: 5px;}
 	.in {width: 200px; display: flex; flex-direction: row; display: flex; flex-direction: row; justify-content: left; align-items: center;}
-
 </style>
 {% load static %}
 {% load user_filters %}
 {% with request.resolver_match.view_name as view_name %}
-    <aside class="aside" style="margin: 4px; border-radius: 10px;">
-        
+    <aside class="aside" style="margin: 4px; border-radius: 10px;">      
         <div class="btn-group-vertical">
 			<h4>Стенды</h4>
 			<div style="display: flex; flex-direction: row;">
@@ -89,8 +87,7 @@
 					<div class="circle" style="background: #FEB614;"></div>
 					<div>FVB</div>
 				</a>
-			</div>
-			
+			</div>			
         </div>
         
         <div class="btn-group-vertical">
@@ -229,20 +226,11 @@
 					<div class="mini-circle" style="background: #FEB614;"></div><div>FVB 7</div>
 				</a>
 			</div>
-
         </div>
         
 		<div class="btn-group-vertical">
 			<h4>Помощь</h4>
 			<div style="display: flex; flex-direction: row;">
-
-
-				
-	
-	
-	
-
-
 				<a class="btn user" style="display: block; text-align: center; width: 244px; color: #808080; font-family: 'Calibri'; font-style: normal; font-weight: 400; font-size: 18px;" href="{% url 'feedbacks' %}">
 					{% if feedbacks_count > 0 %}
 						Предложения(<span style="color: red;">{{feedbacks_count}}</span>)
@@ -306,6 +294,5 @@
 			}, 
 			false
 		);
-
 	</script>
 {% endwith %}

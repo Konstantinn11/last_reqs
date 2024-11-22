@@ -1,8 +1,55 @@
 ﻿{% extends "base.html" %}
-{% block header %}<a style="color: black;">Страница помощи</a>{% endblock %}
+{% block header %}<a style="color: black; margin-left: 250px;">Страница помощи</a>{% endblock %}
 {% load static %}
 {% load user_filters %}
+{% block aside %}
+<!-- Блок aside оставлен пустым -->
+{% endblock %}
 {% block content %}
+<style>
+	h4 {
+		color: #808080;
+		font-family: 'Calibri';
+		font-style: normal;
+		font-weight: 700;
+		font-size: 18px;
+		line-height: 22px;
+		margin: 0px;
+		text-align: left;
+	}
+	.help {
+        margin-left: 250px;
+		width: 100%;
+    }
+	.sib, .acib, .isib, .fib, .nuc, .fib_bm, .fvb, .user{
+		width: 120px;
+		height: 37px;
+		display: flex; flex-direction: row;
+		margin: 2px;
+		border: 3px solid white;
+		border-radius: 10px;
+		box-shadow: 0px 0px 7px rgba(0, 0, 0, 0.2);
+		font-family: 'Calibri';
+		font-style: normal;
+		font-weight: 400;
+		font-size: 18px;
+		line-height: 22px;
+	}
+	.sib:hover {
+		transition: 0.4s;
+		background: #3b3b3a;
+		border: 3px solid white;
+		color: white;
+	}
+
+	.btn-group-vertical {
+	margin: 2px auto;
+	}
+	.circle, .circle_trans {background: #01A86B; width: 15px; height: 15px; border-radius: 50%; margin-right: 15px; margin-top: 4px; margin-left: 5px;}
+	.circle_trans {background: transparent;}
+	.mini-circle {background: #01A86B; width: 15px; height: 15px; border-radius: 50%; margin-right: 5px; margin-left: 5px;}
+	.in {width: 200px; display: flex; flex-direction: row; display: flex; flex-direction: row; justify-content: left; align-items: center;}
+</style>
 <section class="help">
 	<div class="card mb-3 mt-3 shadow-sm" style="background: #E6E6E6;">
 		<div class="container">

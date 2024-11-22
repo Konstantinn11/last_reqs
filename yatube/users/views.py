@@ -31,6 +31,7 @@ import os
 import zipfile
 from corresp.models import Corresp
 from users.vacation_data import holidays, some_colors, month_num_str, special_work_days, bosses, months_ru, color_cycle 
+from django.http import JsonResponse
 
 def vac_access_check(request):
     return get_object_or_404(User_info, user_id=request.user.id).vacs_access
@@ -354,8 +355,8 @@ def vac_2(request, year, otd):
     if request.user.get_full_name() not in bosses.keys():
         otd_id = User_info.objects.filter(user_id=request.user.id)[0].otd_number_id
         otd = int(Unit.objects.filter(id=otd_id)[0].description)
-        otd_users = User_info.objects.filter(otd_number_id=otd_id)  # записи сотрудников отдела
-        otd_users_id = [user.user_id for user in otd_users]  # id сотрудников отдела
+        otd_users = User_info.objects.filter(otd_number_id=otd_id) 
+        otd_users_id = [user.user_id for user in otd_users] 
         vacations = Vacation.objects.filter(user_id__in=otd_users_id, year=str(year))
         otds_for_choise = [otd]
         otd_users_full_names = [request.user]
@@ -363,16 +364,16 @@ def vac_2(request, year, otd):
         if otd == 0:  # Все
             vacations = Vacation.objects.filter(year=str(year))
         else:
-            otd_id = Unit.objects.filter(description=otd)[0].id  # id отдела
-            otd_users = User_info.objects.filter(otd_number_id=otd_id)  # записи сотрудников отдела
-            otd_users_id = [user.user_id for user in otd_users]  # id сотрудников отдела
+            otd_id = Unit.objects.filter(description=otd)[0].id  
+            otd_users = User_info.objects.filter(otd_number_id=otd_id)  
+            otd_users_id = [user.user_id for user in otd_users]  
             vacations = Vacation.objects.filter(user_id__in=otd_users_id, year=str(year))
         otds_for_choise = bosses[request.user.get_full_name()]
 
 
         otd_ids = [Unit.objects.filter(description=descr)[0].id for descr in bosses[request.user.get_full_name()]]
 
-        otd_users = User_info.objects.filter(otd_number_id__in=otd_ids)  # записи сотрудников отдела
+        otd_users = User_info.objects.filter(otd_number_id__in=otd_ids) 
         otd_users_id = [user.user_id for user in otd_users]
         otd_users_full_names = [user for user in User.objects.filter(id__in=otd_users_id)]
 
@@ -384,14 +385,12 @@ def vac_2(request, year, otd):
 
         vacation_start_dates[vac.user.get_full_name()].append(vac.day_start.date())
 
-    users_colors = {}  # изменить на присвоение уникального номера юзеру
+    users_colors = {} 
 
     for vac in vacations:
         if vac.user.get_full_name() not in users_colors.keys():
-            # Получаем следующий цвет из цикла
             users_colors[vac.user.get_full_name()] = next(color_cycle)
 
-    # [{'vac': vac, 'range': range, 'color': color, }]
     cross_vacations = get_cross_vacations(vacations, users_colors, month_num_str)
 
 
@@ -401,7 +400,7 @@ def vac_2(request, year, otd):
         if vac.user.get_full_name() not in vacations_by_user.keys():
             vacations_by_user[vac.user.get_full_name()] = {
                 'color': users_colors[vac.user.get_full_name()],
-                'dates': [],  # {'d': 12.12 -18.12, 'vac_id': vac_id, 'vac_can_redact': vac_can_redact}
+                'dates': [],
                 'sum': 0,
                 'otd': '',
                 'user_id': vac.user_id,
@@ -414,10 +413,33 @@ def vac_2(request, year, otd):
                     break
         
         start_date = vac.day_start.date()
-        days_count = (vac.day_end.date() - vac.day_start.date()).days + 1  # Количество дней отпуска
-        vacations_by_user[vac.user.get_full_name()]['vacation_start_dates'].append((start_date, days_count))
+        days_count = (vac.day_end.date() - vac.day_start.date()).days + 1  
 
-        # vacations_by_user[vac.user.get_full_name()]['sum'] += days_count
+        # Считаем количество праздничных дней, которые попадают в отпуск
+        holidays_count = 0
+        for y, m_d in holidays.items():
+            for m, d in m_d.items():
+                for day in d:
+                    # Получаем номер месяца
+                    month_number = get_key_from_dict_by_value(month_num_str, m)
+
+                    # Формируем дату праздника
+                    holiday_date = today.replace(year=int(y), month=month_number, day=day)
+
+                    # Проверяем, попадает ли праздник в диапазон отпуска
+                    if vac.day_start.date() <= holiday_date <= vac.day_end.date():
+                        holidays_count += 1
+
+        # Корректируем количество дней отпуска с учетом праздничных дней
+        days_count -= holidays_count
+
+        # Теперь вычисляем дату окончания с учетом исключенных праздничных дней
+        end_date = start_date + dt.timedelta(days=days_count - 1)
+
+        # Если мы вычли праздничные дни, увеличиваем дату окончания
+        end_date += dt.timedelta(days=holidays_count)
+
+        vacations_by_user[vac.user.get_full_name()]['vacation_start_dates'].append((start_date, days_count))
 
         vacations_by_user[vac.user.get_full_name()]['dates'].append(
             {'d': f"{vac.day_start.day} {month_num_str[vac.day_start.month][:3]} - {vac.day_end.day} {month_num_str[vac.day_end.month][:3]}",
@@ -429,7 +451,6 @@ def vac_2(request, year, otd):
         vacations_by_user[vac.user.get_full_name()]['sum'] += (vac.day_end.date() - vac.day_start.date()).days + 1
 
         # Добавление даты окончания в словарь
-        end_date = start_date + dt.timedelta(days=days_count - 1)  # Вычисляем дату окончания
         vacations_by_user[vac.user.get_full_name()]['vacation_end_dates'].append(end_date)
         
         for y, m_d in holidays.items():
@@ -503,147 +524,10 @@ def vac_2(request, year, otd):
          'show_add_leave_button': True,
          'bosses_list': json.dumps(bosses_list),
          'current_user_name': current_user_name,
-         'navbar_style': 'custom-navbar'
+         'navbar_style': 'custom-navbar',
+         'show_vacation_link': True,
         }
     )
-
-
-def vacations(request, year, otd):
-    if not vac_access_check(request):
-        return render(request, 'no_rights.html',)
-
-    number = otd
-    if otd == 0:
-        return redirect('vacations_start')
-    otd_id = Unit.objects.filter(description=otd)[0].id  # id отдела
-    otd_users = User_info.objects.filter(otd_number_id=otd_id)  # записи сотрудников отдела
-    otd_users_id = []
-    #year = dt.datetime.today().year
-    today = dt.datetime.today().date()
-    for user in otd_users:
-        otd_users_id.append(user.user_id)  # id сотрудников отдела
-    vacations = Vacation.objects.filter(user_id__in=otd_users_id, year=str(year))
-
-    months = {
-        1:'Январь', 2:'Февраль', 3:'Март',
-        4:'Апрель', 5:'Май', 6:'Июнь',
-        7:'Июль', 8:'Август', 9:'Сентябрь',
-        10:'Октябрь', 11:'Ноябрь', 12:'Декабрь',
-    }
-
-    full_year_by_month = {}
-    vacations_by_month_by_users = {}
-
-    for key in months.keys():
-        full_year_by_month[months[key]] = []
-        _, last_day = monthrange(year, key)
-        for i in range(1,last_day + 1):
-            day = str(year) + '-'
-            
-            if len(str(key)) == 1:
-                day = day + '0' + str(key)
-            else:
-                day = day + str(key)
-                
-            if len(str(i)) == 1:
-                day = day + '-0' + str(i)
-            else:
-                day = day + '-' + str(i)
-            
-            day = dt.datetime.strptime(day, '%Y-%m-%d').date()
-            full_year_by_month[months[key]].append(day)
-
-    for val in months.values():
-        vacations_by_month_by_users[val] = {}
-    for vacation in vacations:
-        month_start = months[vacation.day_start.date().month]
-        month_end = months[vacation.day_end.date().month]
-        month_btw = []
-        month_btw.append(month_start)
-        if month_start not in vacations_by_month_by_users.keys():
-            vacations_by_month_by_users[month_start] = {}
-        if month_end not in vacations_by_month_by_users.keys():
-            vacations_by_month_by_users[month_end] = {}
-
-        for i in range(vacation.day_end.date().month - vacation.day_start.date().month):
-            if (vacation.day_start.date().month + i) > vacation.day_start.date().month and (vacation.day_start.date().month + i) < vacation.day_end.date().month:
-                m = months[vacation.day_start.date().month + i]
-
-                if m not in vacations_by_month_by_users.keys():
-                    vacations_by_month_by_users[m] = {}
-                month_btw.append(m)
-        if month_start != month_end:
-            month_btw.append(month_end)
-        day_start = vacation.day_start.date()
-        day_end = vacation.day_end.date()
-        name = vacation.user.get_full_name()
-
-        for m in month_btw:
-            if name not in vacations_by_month_by_users[m].keys():
-                vacations_by_month_by_users[m][name] = []
-
-            vacations_by_month_by_users[m][name].append(day_start)
-            while day_start < day_end:
-                some_day = day_start + dt.timedelta(days=1)
-                vacations_by_month_by_users[m][name].append(some_day)
-                day_start = some_day
-            day_start = vacation.day_start.date()           
-
-    for k, v  in vacations_by_month_by_users.items():
-        vacations_by_month_by_users[k] = dict(sorted(v.items()))
-
-    #for_js = {} # {"20230311": [id1, id2...]}
-    #users_js = {} # {"20230311": [Емельянов Николай, id2...]}
-    #colors_js = {} # {"20230311": [#FF6384, #63FF84...]}
-    #user_ids = {} # {"id": [Емельянов Николай, ...]}
-
-    some_colors = ["#B8860B", "#FF00FF", "#8A2BE2", "#00BFFF", "#F0E68C", "#7FFFD4", "#FFA500", "#20B2AA", "#FF96B4", "#00FA9A", "#FA8072"]
-    user_colors = {}
-    for vacation in vacations:
-        if vacation.user.get_full_name() not in user_colors.keys():
-            user_colors[vacation.user.get_full_name()] = some_colors.pop()
-
-    days_can_redact = {}  # словарь типа "День:[Человек_возможность редактировать,]"
-    for vacation in vacations:
-        some_day = vacation.day_start
-        while some_day <= vacation.day_end:
-            if str(some_day.date()).replace('-', '') not in days_can_redact.keys():
-                days_can_redact[str(some_day.date()).replace('-', '')] = []
-            if str(vacation.user.get_full_name()) not in  days_can_redact[str(some_day.date()).replace('-', '')]:
-                days_can_redact[str(some_day.date()).replace('-', '')].append(str(vacation.user.get_full_name()) + "_" + str(vacation.can_redact))
-            some_day = some_day  + dt.timedelta(days=1)
-    print(days_can_redact)
-    months_to_numbers = {'января': '01', 'февраля': '02', 'марта': '03', 'апреля': '04',
-                         'мая': '05', 'июня': '06', 'июля': '07', 'августа': '08',
-                         'сентября': '09', 'октября': '10', 'ноября': '11', 'декабря': '12',}
-    years = [2023, 2024]
-    try:
-        otd_id = User_info.objects.filter(user_id=request.user.id)[0].otd_number_id
-        otd = int(Unit.objects.filter(id=otd_id)[0].description)
-    except:
-        otd = 0
-    
-    return render(
-        request,
-        'vacations_all.html',
-        {
-            **rights(request),
-            'pdf': settings.BASE_DIR + f"/posts/static/users/vacations_{number}_{year}.pdf",
-            'holidays': holidays,
-            'special_work_days': special_work_days,
-            'year': year, 'years': years,
-            'json_data': json.dumps(days_can_redact),
-            'months_to_numbers': json.dumps(months_to_numbers),
-            'bosses': bosses,
-            'today': today,
-            'vacations': vacations,
-            'otd': otd, 'number': number,
-            'user_colors': user_colors,
-            'full_year_by_month': full_year_by_month,
-            'vacations_by_month_by_users': vacations_by_month_by_users,
-        },
-    )
-
 
 def get_user_bords_and_ids(all_bords, user_id):
     user_bords = [b for b in all_bords if (str(user_id) in b.guests.split('_')) or b.user_id == user_id ]
@@ -1483,6 +1367,31 @@ def vac_2_days(request, year, otd):
         
         start_date = vac.day_start.date()
         days_count = (vac.day_end.date() - vac.day_start.date()).days + 1  # Количество дней отпуска
+
+        # Считаем количество праздничных дней, которые попадают в отпуск
+        holidays_count = 0
+        for y, m_d in holidays.items():
+            for m, d in m_d.items():
+                for day in d:
+                    # Получаем номер месяца
+                    month_number = get_key_from_dict_by_value(month_num_str, m)
+
+                    # Формируем дату праздника
+                    holiday_date = today.replace(year=int(y), month=month_number, day=day)
+
+                    # Проверяем, попадает ли праздник в диапазон отпуска
+                    if vac.day_start.date() <= holiday_date <= vac.day_end.date():
+                        holidays_count += 1
+
+        # Корректируем количество дней отпуска с учетом праздничных дней
+        days_count -= holidays_count
+
+        # Теперь вычисляем дату окончания с учетом исключенных праздничных дней
+        end_date = start_date + dt.timedelta(days=days_count - 1)
+
+        # Если мы вычли праздничные дни, увеличиваем дату окончания
+        end_date += dt.timedelta(days=holidays_count)
+
         vacations_by_user[vac.user.get_full_name()]['vacation_start_dates'].append((start_date, days_count))
 
         vacations_by_user[vac.user.get_full_name()]['dates'].append(
@@ -1495,7 +1404,6 @@ def vac_2_days(request, year, otd):
         vacations_by_user[vac.user.get_full_name()]['sum'] += (vac.day_end.date() - vac.day_start.date()).days + 1
 
         # Добавление даты окончания в словарь
-        end_date = start_date + dt.timedelta(days=days_count - 1)  # Вычисляем дату окончания
         vacations_by_user[vac.user.get_full_name()]['vacation_end_dates'].append(end_date)
         
         for y, m_d in holidays.items():
@@ -1565,7 +1473,8 @@ def vac_2_days(request, year, otd):
          'show_add_leave_button': True,
          'bosses_list': json.dumps(bosses_list),
          'current_user_name': current_user_name,
-         'navbar_style': 'custom-navbar'
+         'navbar_style': 'custom-navbar',
+         'show_vacation_link': True,
         }
     )
 
@@ -1575,9 +1484,11 @@ def vac_all(request, otd):
 
     today = dt.datetime.today().date()
     year = today.year
-    
-     # Отображаем отпуска без учета года, только те, которые еще актуальны
-    if request.user.get_full_name() not in bosses.keys():
+
+    current_user_name = request.user.get_full_name()
+
+    # Если пользователь не является боссом
+    if current_user_name not in bosses:
         otd_id = User_info.objects.filter(user_id=request.user.id)[0].otd_number_id
         otd = int(Unit.objects.filter(id=otd_id)[0].description)
         otd_users = User_info.objects.filter(otd_number_id=otd_id)
@@ -1586,16 +1497,20 @@ def vac_all(request, otd):
         otds_for_choise = [otd]
         otd_users_full_names = [request.user]
     else:
-        if otd == 0:
-            vacations = Vacation.objects.filter(day_end__gte=today).order_by('day_start')
-        else:
+        # Если пользователь босс
+        if otd == 0:  # Все отделы, которыми он руководит
+            otds_for_choise = bosses[current_user_name]
+            otd_ids = [Unit.objects.filter(description=descr)[0].id for descr in otds_for_choise]
+            otd_users = User_info.objects.filter(otd_number_id__in=otd_ids)
+        else:  # Выбран конкретный отдел
             otd_id = Unit.objects.filter(description=otd)[0].id
             otd_users = User_info.objects.filter(otd_number_id=otd_id)
-            otd_users_id = [user.user_id for user in otd_users]
-            vacations = Vacation.objects.filter(user_id__in=otd_users_id, day_end__gte=today).order_by('day_start')
-        otds_for_choise = bosses[request.user.get_full_name()]
+            otds_for_choise = [otd]
 
-    # Отфильтруем только текущий или ближайший отпуск для каждого сотрудника
+        otd_users_id = [user.user_id for user in otd_users]
+        vacations = Vacation.objects.filter(user_id__in=otd_users_id, day_end__gte=today).order_by('day_start')
+
+    # Дальнейшая логика остаётся прежней
     nearest_vacations = {}
     for vac in vacations:
         if vac.day_start.date() >= today or (vac.day_start.date() <= today <= vac.day_end.date()):
@@ -1647,17 +1562,36 @@ def vac_all(request, otd):
         
         start_date = vac.day_start.date()
         days_count = (vac.day_end.date() - vac.day_start.date()).days + 1
-        vacations_by_user[vac.user.get_full_name()]['vacation_start_dates'].append((start_date, days_count))
+        
+        # Подсчитываем количество праздничных дней в отпуске (включая выходные и будние)
+        holidays_in_vacation = 0
+        for y, m_d in holidays.items():
+            for m, d in m_d.items():
+                for day in d:
+                    month_number = get_key_from_dict_by_value(month_num_str, m)
+                    holiday_date = today.replace(year=int(y), month=month_number, day=day)
+
+                    # Проверяем, попадает ли праздник в диапазон отпуска
+                    if start_date <= holiday_date <= start_date + dt.timedelta(days=days_count - 1):
+                        holidays_in_vacation += 1
+
+        # Уменьшаем количество дней отпуска на праздничные дни
+        actual_days_count = days_count - holidays_in_vacation
+
+        # Устанавливаем дату окончания, добавляя количество праздничных дней
+        end_date = start_date + dt.timedelta(days=actual_days_count + holidays_in_vacation - 1)
+
+        # Обновляем данные пользователя с корректными значениями
+        vacations_by_user[vac.user.get_full_name()]['vacation_start_dates'].append((start_date, actual_days_count))
 
         vacations_by_user[vac.user.get_full_name()]['dates'].append(
             {'d': f"{vac.day_start.day} {month_num_str[vac.day_start.month][:3]} - {vac.day_end.day} {month_num_str[vac.day_end.month][:3]}",
-             'vac_id': vac.id,
-             'vac_can_redact': vac.can_redact,
-             }
+            'vac_id': vac.id,
+            'vac_can_redact': vac.can_redact,
+            }
         )
 
-        vacations_by_user[vac.user.get_full_name()]['sum'] += days_count
-        end_date = start_date + dt.timedelta(days=days_count - 1)
+        vacations_by_user[vac.user.get_full_name()]['sum'] += actual_days_count
         vacations_by_user[vac.user.get_full_name()]['vacation_end_dates'].append(end_date)
 
         formatted_start = f"{start_date.day} {months_ru[start_date.month]} {start_date.year}"
@@ -1702,8 +1636,85 @@ def vac_all(request, otd):
         }
     )
 
-def vac_calendars(request):
-    context = {
+def vac_calendars(request, otd, year=None):
+    if not vac_access_check(request):
+        return render(request, 'no_rights.html')
 
-    }
-    return render(request, 'vac_calendars.html', context)
+    current_year = dt.datetime.now().year
+    current_user_name = request.user.get_full_name()
+    today = dt.datetime.today().date()
+
+    year = request.GET.get('year', current_year)
+    year = int(year)
+
+    years_range = [current_year - 1, current_year, current_year + 1]
+    years_range.sort(reverse=True)
+
+    # Проверка, является ли пользователь боссом
+    if current_user_name not in bosses.keys():
+        otd_id = User_info.objects.filter(user_id=request.user.id).first().otd_number_id
+        otd_users = User_info.objects.filter(otd_number_id=otd_id)
+        otd_users_id = [user.user_id for user in otd_users]
+        linked_units = [Unit.objects.filter(id=otd_id).first().description]
+    else:
+        if otd == 0:
+            linked_units = bosses[current_user_name]
+            otd_ids = [Unit.objects.filter(description=desc).first().id for desc in linked_units]
+        else:
+            otd_id = Unit.objects.filter(description=otd).first().id
+            linked_units = [otd]
+            otd_ids = [otd_id]
+
+        otd_users = User_info.objects.filter(otd_number_id__in=otd_ids)
+        otd_users_id = [user.user_id for user in otd_users]
+
+    otds_for_choise = linked_units
+
+    otd_data = []
+    units = Unit.objects.filter(description__in=linked_units)
+    for unit in units:
+        unit_users = User_info.objects.filter(otd_number_id=unit.id)
+        unit_user_ids = [user.user_id for user in unit_users]
+        vacations_count = Vacation.objects.filter(user_id__in=unit_user_ids, year=str(year)).count()
+
+        if vacations_count > 0:
+            otd_data.append({
+                'otd': unit.title,
+                'otd_description': unit.description,
+                'employees': unit_users.count(),
+                'vacations': vacations_count
+            })
+
+    filtered_years_vacations_count = {}
+    for y in years_range:
+        filtered_years_vacations_count[y] = Vacation.objects.filter(
+            user_id__in=otd_users_id, year=str(y)
+        ).count()
+
+    has_vacations_in_linked_units = any(count > 0 for count in filtered_years_vacations_count.values())
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({
+            'otd_data': otd_data,
+            'linked_units': linked_units,
+        })
+
+    return render(
+        request,
+        'vac_calendars.html',
+        {
+            **rights(request),
+            'today': today,
+            'year': year,
+            'current_year': current_year,
+            'otd': otd,
+            'years_vacations_count': filtered_years_vacations_count,
+            'otds_for_choise': otds_for_choise,
+            'bosses': list(bosses.keys()),
+            'current_user_name': current_user_name,
+            'navbar_style': 'custom-navbar',
+            'show_button': True,
+            'years_range': years_range,
+            'has_vacations_in_linked_units': has_vacations_in_linked_units,
+        }
+    )

@@ -2,9 +2,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import get_user_model
 from django.forms.models import ModelForm
 from django.forms import Textarea, Select, DateInput
-from django import forms
 from .models import User_info, Vacation, Message, Position
-from posts.models import Unit
 User = get_user_model()
 
 
@@ -12,46 +10,19 @@ class DateInput(DateInput):
     input_type = 'date'
 
 class CreationForm(UserCreationForm):
-    # Добавляем поля для должности и номера отдела
-    position = forms.ModelChoiceField(
-        queryset=Position.objects.all(),
-        required=True,  # Сделаем обязательным для выбора
-        label='Должность'
-    )
-    otd_number = forms.ModelChoiceField(
-        queryset=Unit.objects.all(),
-        required=True,  # Сделаем обязательным для выбора
-        label='Номер отдела'
-    )
 
     def __init__(self, *args, **kwargs):
         # Инициализируем форму
-        super().__init__(*args, **kwargs)
+        super(UserCreationForm, self).__init__(*args, **kwargs)
         self.fields['first_name'].required = True
         self.fields['last_name'].required = True
         self.fields['email'].required = True
 
-    class Meta:
+    class Meta(UserCreationForm.Meta):
+        # укажем модель, с которой связана создаваемая форма
         model = User
-        # Указываем, какие поля должны быть видны в форме
-        fields = ('first_name', 'last_name', 'position', 'otd_number', 'username', 'email')
-
-    def save(self, commit=True):
-        # Сохраняем пользователя
-        user = super().save(commit=False)
-        if commit:
-            user.save()
-
-        # Создаем объект User_info и сохраняем его
-        user_info = User_info(
-            user=user,  # Связываем User с User_info
-            position=self.cleaned_data.get('position'),
-            otd_number=self.cleaned_data.get('otd_number')
-        )
-        if commit:
-            user_info.save()  # Сохраняем User_info в базе данных
-
-        return user
+        # укажем, какие поля должны быть видны в форме и в каком порядке
+        fields = ('first_name', 'last_name', 'username', 'email')
 
 class User_infoForm(ModelForm):
 

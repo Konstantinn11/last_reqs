@@ -4,135 +4,152 @@
     .aside-vac {
         position: fixed;
         top: 0;
-        width: 330px;
+        width: 350px;
         height: 100%;
         background-color: #f4f4f4;
         box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-        padding: 20px;
         z-index: 1000;
     }
 
-    .custom-button {
-        text-transform: none;
-        background: none;
-        border: none;
-        color: black;
-        padding: 5px;
-        cursor: pointer;
-        display: inline-flex;
+    .tabs-container {
+        display: flex;
+        flex-direction: column;
+        margin-top: 14px;
+    }
+
+    .vertical-tab {
+        display: flex;
         align-items: center;
+        padding: 10px 15px;
         font-size: 20px;
-        width: auto;
-        margin-left: -2px;
+        cursor: pointer;
+        border-left: 4px solid transparent;
+        width: 100%;
+        height: 60px;
+        background-color: transparent;
     }
 
-    .custom-button:focus {
-        outline: none;
-        box-shadow: none;
-    }
-
-    .custom-button img {
-        filter: none;
-        opacity: 1;
-    }
-
-    .custom-button:hover {
-        background: none;
+    .vertical-tab.active-tab {
+        background-color: rgba(21, 163, 98, 0.06); /* Зеленый фон при активной кнопке */
+        border-left: 4px solid #15a362; /* Зеленая левая граница при активной кнопке */
         color: #15a362;
     }
 
-    .custom-button:hover img {
+    .vertical-tab.active-tab .tab-icon{
         filter: brightness(0) saturate(100%) invert(42%) sepia(76%) saturate(231%) hue-rotate(129deg) brightness(93%) contrast(101%);
     }
 
-    #arrow {
-        transition: transform 0.3s ease; /* Переход для поворота */
+    .vertical-tab:hover {
+        color: #15a362;
     }
 
-    .arrow-up {
-        transform: rotate(180deg);
+    .vertical-tab:hover .tab-icon {
+        filter: brightness(0) saturate(100%) invert(42%) sepia(76%) saturate(231%) hue-rotate(129deg) brightness(93%) contrast(101%);
     }
 
-    #sub-menu {
+    .vertical-tab:hover .tab-arrow {
+        filter: brightness(0) saturate(100%) invert(42%) sepia(76%) saturate(231%) hue-rotate(129deg) brightness(93%) contrast(101%);
+    }
+
+    .tab-icon {
+        height: 25px;
+        margin-right: 10px;
+    }
+
+    .tab-arrow {
+        margin-left: 75px;
+        margin-right: auto;
+        height: 20px;
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .sub-menu.open + .vertical-tab .tab-arrow {
+        transform: rotate(180deg); /* Поворот стрелки на 180 градусов */
+    }
+
+    .sub-menu {
+        display: none;
+        flex-direction: column;
+        margin-left: 35px;
         display: flex;
-        flex-direction: column; 
-        margin-left: 40px;
         max-height: 0;
         overflow: hidden;
         transition: max-height 0.4s ease-in-out;
     }
 
-    #sub-menu.open {
-        max-height: 200px; /* Установите значение, достаточное для полного раскрытия */
+    .sub-menu.open {
+        display: flex;
+        max-height: 100px;
     }
 
-    .submenu-button {
-        color: #5d6778; /* Цвет текста */
-        text-align: center;
-        margin-left: 3px; /* Сдвиг кнопок вправо */
+    .submenu-tab {
+        font-size: 20px;
+        font-weight: normal;
+        color: #5d6778;
         text-decoration: underline;
-        background: none;
-        border: none;
-        box-shadow: none;
-        cursor: pointer;
-        font-size: 19px;
+        border-left: 3px solid rgba(160, 160, 160, 0.2);
+    }
+
+    .submenu-tab:hover {
+        color: #000;
     }
 </style>
 
 <div class="aside-vac">
     <a href="{% url 'vac_all' otd=0 %}">
-        <img style="height: 45px;" src={% static "logo_ya_removebg.png" %}>
+        <img style="height: 45px; margin-top: 15px; margin-left: 20px; margin-bottom: 5px;" src={% static "logo_ya_removebg.png" %}>
     </a>
-    <div style="display: flex; flex-direction: column; position: relative; margin-top: 14px;">
-        <button class="custom-button" type="button" onclick="handleClick(this);">
-            <img id="vacationIcon" style="height: 30px; margin-right: 15px;" src="{% static 'list.svg' %}"> Графики отпусков
-        </button>
+    <div class="tabs-container">
+        <div class="vertical-tab {% if request.path == '/auth/vac_calendars/0/' %}active-tab{% endif %}" onclick="showLoader(this); window.location.href='{% url 'vac_calendars' 0 %}'">
+            <img class="tab-icon" src="{% static 'list1.svg' %}" alt="Графики отпусков"> Графики отпусков
+        </div>
 
         {% if key == request.user.get_full_name or request.user.get_full_name in bosses %}
-            <button class="custom-button" type="button" id="otd_button" onclick="toggleSubMenu()" style="display: inline-flex; align-items: center;">
-                <img id="vacationMenuIcon" style="height: 30px; margin-right: 15px;" src="{% static 'mood.svg' %}"> Отпуска 
-                <img id="arrow" src="{% static 'keyboard_arrow_down.svg' %}" style="margin-left: 77px; width: 20px; height: 20px;">
-            </button>
-
+            <div class="vertical-tab" onclick="toggleSubMenu()">
+                <img class="tab-icon" src="{% static 'mood.svg' %}" alt="Отпуска"> Отпуска
+                <img id="submenu-arrow" src="{% static 'keyboard_arrow_down.svg' %}" class="tab-arrow">
+            </div>
             <!-- Выпадающий список -->
-            <div id="sub-menu">
-                <button class="custom-button submenu-button" type="button" onclick="showLoader(this)" style="text-decoration: underline; margin-bottom: -12px; margin-top: 4px; background: none; box-shadow: none;">Все отпуска</button>
-                <button class="custom-button submenu-button" type="button" onclick="showLoader(this)" style="text-decoration: underline; margin-bottom: -8px; background: none; box-shadow: none;">Мои отпуска</button>
+            <div id="sub-menu" class="sub-menu">
+                <div class="vertical-tab submenu-tab {% if request.path == '/vacations/all/' %}active-tab{% endif %}" onclick="showLoader(this)">
+                    Все отпуска
+                </div>
+                <div class="vertical-tab submenu-tab {% if request.path == '/vacations/mine/' %}active-tab{% endif %}" onclick="showLoader(this)">
+                    Мои отпуска
+                </div>
             </div>
         {% else %}
-            <button class="custom-button" type="button" onclick="showLoader(this); location.href='#'" style="display: inline-flex; align-items: center;">
-                <img id="vacationMenuIcon" style="height: 30px; margin-right: 15px;" src="{% static 'mood.svg' %}"> Мои отпуска
-            </button>    
+            <div class="vertical-tab {% if request.path == '/vacations/mine/' %}active-tab{% endif %}" onclick="showLoader(this); window.location.href='#'">
+                <img class="tab-icon" src="{% static 'mood.svg' %}" alt="Мои отпуска"> Мои отпуска
+            </div>
         {% endif %}
-        <button class="custom-button" type="button" id="employee_button" onclick="showLoader(this)">
-            <img id="employeeIcon" style="height: 30px; margin-right: 15px;" src="{% static 'group.svg' %}"> Сотрудники
-        </button>
 
-        <button class="custom-button" type="button" id="profile_button" onclick="showLoader(this)">
-            <img id="profileIcon" style="height: 30px; margin-right: 15px;" src="{% static 'account.svg' %}"> Мой профиль
-        </button>
-
-        <button class="custom-button" type="button" onclick="showLoader(this); location.href='{% url 'user_space' user_id=0 %}'">
-            <img id="homeIcon" style="height: 30px; margin-right: 15px;" src="{% static 'arrow_back.svg' %}"> На главную
-        </button>
+        <div class="vertical-tab {% if request.path == '/employees/' %}active-tab{% endif %}" onclick="showLoader(this); window.location.href='#'">
+            <img class="tab-icon" src="{% static 'group.svg' %}" alt="Сотрудники"> Сотрудники
+        </div>
+        <div class="vertical-tab {% if request.path == '/profile/' %}active-tab{% endif %}" onclick="showLoader(this); window.location.href='#'">
+            <img class="tab-icon" src="{% static 'account.svg' %}" alt="Мой профиль"> Мой профиль
+        </div>
+        <div class="vertical-tab" onclick="showLoader(this); window.location.href='{% url 'user_space' user_id=0 %}'">
+            <img class="tab-icon" src="{% static 'arrow_back.svg' %}" alt="На главную"> На главную
+        </div>
     </div>
 </div>
 
-<script>
-    function redirectToCurrentYear() {
-        const currentYear = new Date().getFullYear();
-        location.href = `{% url 'vac_2' year=0 otd=0 %}`.replace('0', currentYear);
-    }
-    
+<script>    
     function toggleSubMenu() {
         var subMenu = document.getElementById("sub-menu");
-        var arrow = document.getElementById("arrow");
+        var arrow = document.getElementById("submenu-arrow");
 
-        // Тоггл класса для открытия/закрытия меню
+        // Переключаем класс 'open' для sub-menu
         subMenu.classList.toggle("open");
-        
-        // Поворачиваем стрелку
-        arrow.classList.toggle("arrow-up");
+
+        // Проверяем, открыт ли subMenu, и меняем направление стрелки
+        if (subMenu.classList.contains("open")) {
+            arrow.style.transform = "rotate(180deg)"; // Поворот стрелки
+        } else {
+            arrow.style.transform = "rotate(0deg)"; // Восстановление стрелки в исходное положение
+        }
     }
 
     function showLoader(button) {
@@ -140,10 +157,5 @@
         if (img) {
             img.src = "{% static 'load.gif' %}";
         }
-    }
-
-    function handleClick(button) {
-        showLoader(button);       // Запускает анимацию загрузки
-        redirectToCurrentYear();  // Перенаправляет на URL с текущим годом
     }
 </script>

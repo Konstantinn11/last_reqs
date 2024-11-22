@@ -1,9 +1,12 @@
 {% extends "base.html" %}
-{% block header %}<a style="color: black;">Контакты</a>{% endblock %}
+{% block header %}<a style="color: black; margin-left: 150px;">Контакты</a>{% endblock %}
 {% load static %}
+{% block aside %}
+<!-- Блок aside оставлен пустым -->
+{% endblock %}
 {% block content %}
 	<link rel="stylesheet" href="{% static 'css/my_try.css'%}">
-	<table border="0" width=120% style="border-collapse: separate; border-spacing: 3px 3px;">
+	<table border="0" width=120% style="border-collapse: separate; border-spacing: 3px 3px; margin-left: 150px;">
 		<tr>
 			<th style="width: 150px; text-align:center;"></th>
 			<th style="width: 150px; text-align:center; color: #808080;">ФИО</th>
@@ -29,6 +32,15 @@
 			<th style="border: 2px solid black; text-align:center; text-align:center;">Отдел систем индикации и сигнализации №223</th>
 			<th style="border: 2px solid black; text-align:center; text-align:center; color:rgb(74, 177, 236);">aleksandr.butskov@ic.irkut.com</th>
 			<th style="border: 2px solid black; text-align:center; text-align:center;">+7 (495) 9872071 доб. 169</th>
+			<th style="border-radius: 0px 10px 10px 0px; border: 2px solid black; text-align:center;">-</th>
+		</tr>
+		<tr style="background: white; height: 100px;">
+			<th style="border-radius: 10px 0px 0px 10px; border: 2px solid black; text-align:center;">Разработка</th>
+			<th style="border: 2px solid black; text-align:center;">Константин Мишуков</th>
+			<th style="border: 2px solid black; text-align:center;">Инженер-конструктор</th>
+			<th style="border: 2px solid black; text-align:center;">Отдел стендовой отработки №306</th>
+			<th style="border: 2px solid black; text-align:center; color:rgb(74, 177, 236);">Konstantin.Mishukov@ic.yakovlev.ru</th>
+			<th style="border: 2px solid black; text-align:center;">+7 (495) 9872071 доб. 309</th>
 			<th style="border-radius: 0px 10px 10px 0px; border: 2px solid black; text-align:center;">-</th>
 		</tr>
 	</table>

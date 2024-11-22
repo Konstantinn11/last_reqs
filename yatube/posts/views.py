@@ -1341,7 +1341,8 @@ def feedbacks(request):
         'dis': dis,
         'likes': likes,
         'page': page,
-        'form': FeedbackForm()
+        'form': FeedbackForm(),
+        'page_noname': ''
     }
     return render(request, 'feedback.html', {**content, **rights(request)})
 
@@ -1453,7 +1454,8 @@ def help(request):
                   {**rights(request),
                    'day': str(dt.date.today()),
                    'wk': str(dt.datetime.now().date().year) + '-' + str(wk),
-                   'month': str(dt.datetime.now().date().year) + "-" + str(dt.datetime.now().date().month)})
+                   'month': str(dt.datetime.now().date().year) + "-" + str(dt.datetime.now().date().month),
+                   'page_noname': ''})
 
 
 def rele_isib(request):
