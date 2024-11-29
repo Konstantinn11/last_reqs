@@ -213,20 +213,10 @@
         padding: 10px 0px;
         font-size: 20px;
         cursor: pointer;
-        border-left: 4px solid transparent;
+        border-left: 3px solid transparent;
         width: 100%;
         height: 60px;
         background-color: transparent;
-    }
-
-    .vertical-tab.active-tab {
-        background-color: rgba(21, 163, 98, 0.06); /* Зеленый фон при активной кнопке */
-        border-left: 4px solid #15a362; /* Зеленая левая граница при активной кнопке */
-        color: #15a362;
-    }
-
-    .vertical-tab.active-tab .tab-icon{
-        filter: brightness(0) saturate(100%) invert(42%) sepia(76%) saturate(231%) hue-rotate(129deg) brightness(93%) contrast(101%);
     }
 
     .vertical-tab:hover {
@@ -250,7 +240,7 @@
         margin-left: 75px;
         margin-right: auto;
         height: 20px;
-        transition: transform 0.3s ease-in-out;
+        transition: none;
     }
 
     .sub-menu-base.open + .vertical-tab .tab-arrow {
@@ -322,15 +312,15 @@
                     </div>
                     <!-- Выпадающий список -->
                     <div id="sub-menu-base" class="sub-menu-base">
-                        <div class="vertical-tab submenu-tab" onclick="showLoader(this)">
+                        <div class="vertical-tab submenu-tab" onclick="showLoader(this); window.location.href='{% url 'vac_all_vacations' %}'">
                             Все отпуска
                         </div>
-                        <div class="vertical-tab submenu-tab" onclick="showLoader(this)">
+                        <div class="vertical-tab submenu-tab" onclick="showLoader(this); window.location.href='{% url 'vac_my_vacations' %}'">
                             Мои отпуска
                         </div>
                     </div>
                 {% else %}
-                    <div class="vertical-tab" onclick="showLoader(this); window.location.href='#'">
+                    <div class="vertical-tab" onclick="showLoader(this); window.location.href='{% url 'vac_my_vacations' %}'">
                         <img class="tab-icon" src="{% static 'mood.svg' %}" alt="Мои отпуска"> Мои отпуска
                     </div>
                 {% endif %}

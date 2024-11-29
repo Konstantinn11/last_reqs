@@ -35,6 +35,9 @@ urlpatterns = [
     path('vacations/vac_edit/<int:otd>/<int:day_s>/<int:month_s>/<int:year_s>/<int:long>/<int:day_e>/<int:month_e>/<int:user_id>/<int:vac_id>/', views.vac_edit, name='vac_edit'),
     path('vac_all/<int:otd>/', views.vac_all, name='vac_all'),
     path('vac_calendars/<int:otd>/', views.vac_calendars, name='vac_calendars'),
+    path('vac_my_vacations/', views.vac_my_vacations, name='vac_my_vacations'),
+    path('vac_all_vacations/', views.vac_all_vacations, name='vac_all_vacations'),
+    path('vacation/<int:vac_id>/', views.vacation_detail, name='vacation_detail'),
 
     path('backup_base/', views.backup_base, name='backup_base'),
     path('backup_files/', views.backup_files, name='backup_files'),

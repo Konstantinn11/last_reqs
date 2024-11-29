@@ -23,7 +23,7 @@
         padding: 10px 15px;
         font-size: 20px;
         cursor: pointer;
-        border-left: 4px solid transparent;
+        border-left: 3px solid transparent;
         width: 100%;
         height: 60px;
         background-color: transparent;
@@ -31,8 +31,14 @@
 
     .vertical-tab.active-tab {
         background-color: rgba(21, 163, 98, 0.06); /* Зеленый фон при активной кнопке */
-        border-left: 4px solid #15a362; /* Зеленая левая граница при активной кнопке */
+        border-left: 3px solid #15a362; /* Зеленая левая граница при активной кнопке */
         color: #15a362;
+    }
+
+    .vertical-tab.active-tab.no-background {
+        background-color: transparent; /* Убираем зеленый фон */
+        color: #15a362; /* Зеленый текст */
+        border-left: 3px solid transparent;/* Зеленая левая граница */
     }
 
     .vertical-tab.active-tab .tab-icon{
@@ -60,7 +66,7 @@
         margin-left: 75px;
         margin-right: auto;
         height: 20px;
-        transition: transform 0.3s ease-in-out;
+        transition: none;
     }
 
     .sub-menu.open + .vertical-tab .tab-arrow {
@@ -93,6 +99,12 @@
     .submenu-tab:hover {
         color: #000;
     }
+
+    .submenu-tab.active-tab {
+        background-color: transparent;
+        border-left: 3px solid #15a362;
+        color: #15a362;
+    }
 </style>
 
 <div class="aside-vac">
@@ -105,21 +117,21 @@
         </div>
 
         {% if key == request.user.get_full_name or request.user.get_full_name in bosses %}
-            <div class="vertical-tab" onclick="toggleSubMenu()">
+            <div class="vertical-tab {% if request.path == '/auth/vac_all_vacations/' or request.path == '/auth/vac_my_vacations/' %}active-tab{% endif %} {% if request.path == '/auth/vac_all_vacations/' or request.path == '/auth/vac_my_vacations/' %}no-background{% endif %}" onclick="toggleSubMenu()">
                 <img class="tab-icon" src="{% static 'mood.svg' %}" alt="Отпуска"> Отпуска
                 <img id="submenu-arrow" src="{% static 'keyboard_arrow_down.svg' %}" class="tab-arrow">
             </div>
             <!-- Выпадающий список -->
-            <div id="sub-menu" class="sub-menu">
-                <div class="vertical-tab submenu-tab {% if request.path == '/vacations/all/' %}active-tab{% endif %}" onclick="showLoader(this)">
+            <div id="sub-menu" class="sub-menu {% if request.path == '/auth/vac_all_vacations/' or request.path == '/auth/vac_my_vacations/' %}open{% endif %}">
+                <div class="vertical-tab submenu-tab {% if request.path == '/auth/vac_all_vacations/' %}active-tab{% endif %}" onclick="showLoader(this); window.location.href='{% url 'vac_all_vacations' %}'">
                     Все отпуска
                 </div>
-                <div class="vertical-tab submenu-tab {% if request.path == '/vacations/mine/' %}active-tab{% endif %}" onclick="showLoader(this)">
+                <div class="vertical-tab submenu-tab {% if request.path == '/auth/vac_my_vacations/' %}active-tab{% endif %}" onclick="showLoader(this); window.location.href='{% url 'vac_my_vacations' %}'">
                     Мои отпуска
                 </div>
             </div>
         {% else %}
-            <div class="vertical-tab {% if request.path == '/vacations/mine/' %}active-tab{% endif %}" onclick="showLoader(this); window.location.href='#'">
+            <div class="vertical-tab {% if request.path == '/auth/vac_my_vacations/' %}active-tab{% endif %}" onclick="showLoader(this); window.location.href='{% url 'vac_my_vacations' %}'">
                 <img class="tab-icon" src="{% static 'mood.svg' %}" alt="Мои отпуска"> Мои отпуска
             </div>
         {% endif %}
@@ -137,18 +149,30 @@
 </div>
 
 <script>    
+    document.addEventListener("DOMContentLoaded", function () {
+        var subMenu = document.getElementById("sub-menu");
+        var arrow = document.getElementById("submenu-arrow");
+
+        // Устанавливаем начальное положение стрелки
+        if (subMenu.classList.contains("open")) {
+            arrow.style.transform = "rotate(180deg)";
+        } else {
+            arrow.style.transform = "rotate(0deg)";
+        }
+    });
+
     function toggleSubMenu() {
         var subMenu = document.getElementById("sub-menu");
         var arrow = document.getElementById("submenu-arrow");
 
-        // Переключаем класс 'open' для sub-menu
+        // Переключаем состояние подменю
         subMenu.classList.toggle("open");
 
-        // Проверяем, открыт ли subMenu, и меняем направление стрелки
+        // Меняем положение стрелки
         if (subMenu.classList.contains("open")) {
-            arrow.style.transform = "rotate(180deg)"; // Поворот стрелки
+            arrow.style.transform = "rotate(180deg)";
         } else {
-            arrow.style.transform = "rotate(0deg)"; // Восстановление стрелки в исходное положение
+            arrow.style.transform = "rotate(0deg)";
         }
     }
 

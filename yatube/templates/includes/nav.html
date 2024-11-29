@@ -13,6 +13,19 @@
 	.navbar.custom-navbar {
 		background: #f4f4f4;
 		box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+		height: 60px;
+	}
+
+	.darker-nav {
+		font-size: 20px;
+		font-weight: normal;
+		color: #15a362;
+		text-decoration: underline;
+		display: inline;
+	}
+
+	.darker-nav:hover {
+		color: green;
 	}
 </style>
 {% load static %}
@@ -27,12 +40,42 @@
 		{% endif %}
 		{% if navbar_style == 'custom-navbar' %}
 			{% if show_vacation_link %}
-				<a style="margin-left: 25px; font-size: 19px; font-weight: normal; color: #15a362; text-decoration: underline; display: inline;" href="{% url 'vac_calendars' 0 %}">
-					Графики отпусков
-				</a>
-				<span style="font-size: 19px; color: #808080; font-weight: normal; display: inline;">
-					&nbsp;/ Единый график, {{ year }} г.
-				</span>
+			<a style="margin-left: 25px;" class="darker-nav" href="{% url 'vac_calendars' 0 %}">
+				Графики отпусков
+			</a>
+			<span style="font-size: 20px; color: #5d6778; font-weight: normal; display: inline;">
+				&nbsp;/ Единый график, {{ year }} г.
+			</span>
+			{% elif show_my_vacations %}
+			<a style="margin-left: 375px;" class="darker-nav" href="{% url 'vac_all' 0 %}">
+				Ближайшие отпуска
+			</a>
+			<span style="font-size: 20px; color: #5d6778; font-weight: normal; display: inline;">
+				&nbsp;/ Мои отпуска
+			</span>
+			{% elif show_all_vacations %}
+			<a style="margin-left: 375px;" class="darker-nav" href="{% url 'vac_all' 0 %}">
+				Ближайшие отпуска
+			</a>
+			<span style="font-size: 20px; color: #5d6778; font-weight: normal; display: inline;">
+				&nbsp;/ Все отпуска
+			</span>
+			{% elif show_vacation_detail %}
+				{% if request.GET.from == 'all_vacations' %}
+					<a style="margin-left: 375px;" class="darker-nav" href="{% url 'vac_all_vacations' %}">
+						Все отпуска
+					</a>
+					<span style="font-size: 20px; color: #5d6778; font-weight: normal; display: inline;">
+						&nbsp;/ Отпуск {{ vacation_user_name }}
+					</span>
+				{% else %}
+					<a style="margin-left: 375px;" class="darker-nav" href="{% url 'vac_my_vacations' %}">
+						Мои отпуска
+					</a>
+					<span style="font-size: 20px; color: #5d6778; font-weight: normal; display: inline;">
+						&nbsp;/ Отпуск {{ vacation_user_name }}
+					</span>
+				{% endif %}
 			{% endif %}
 		{% else %}
 			<img style="height: 45px; margin-left: 30px; margin-right: 100px;"
@@ -77,7 +120,7 @@
 			{% if user.is_authenticated %}
 				{% if show_button %}
 					<li>
-						<a id="add-leave-button" class="btn sib" onclick="showDropdown(event)" style="background-color:#15a362; font-family: 'Calibri'; font-style: normal; font-weight: 400; width: 180px; height: 36px; font-size: 18px; border-radius: 5px;
+						<a id="add-leave-button" class="btn sib" onclick="showDropdown(event)" style="background-color:#15a362; font-family: 'Calibri'; font-style: normal; font-weight: 400; width: 190px; height: 38px; font-size: 19px; border-radius: 5px;
 						color: white; text-align: center; display: flex; align-items: center; justify-content: center; margin-right: 20px; cursor: pointer;">
 							Добавить отпуск
 							<img style="height: 22px; margin-left: 3px;" src="{% static 'arrow_down.png' %}">
@@ -85,7 +128,7 @@
 					</li>
 				{% endif %}
 				<li>
-					<a id="username" class="p-2" style="color: rgb(74, 177, 236); display: flex; align-items: center; justify-content: center;" href="{% url 'user_space' user.id %}">{{ user.username }}</a>
+					<a id="username" class="p-2" style="color: rgb(74, 177, 236); display: flex; align-items: center; justify-content: center;" href="{% url 'user_space' user.id %}">{{ request.user.get_full_name }}</a>
 				</li> 
 				<span style="display: flex; align-items: center;">|</span>
 				<li>
