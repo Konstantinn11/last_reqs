@@ -1,7 +1,7 @@
 from django.views.generic import CreateView
 import re
 import requests
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 User = get_user_model()
@@ -9,7 +9,7 @@ from .forms import CreationForm, User_infoForm, VacationForm, MessageForm
 from django.core.paginator import Paginator
 from django.conf import settings
 from posts.models import Feedback
-from django.shortcuts import render, get_object_or_404, redirect, reverse
+from django.shortcuts import render, get_object_or_404, redirect
 from .models import User_info, Log, Vacation, User_widgets, Message
 from django.db.models import Q
 #from django.utils import timezone
@@ -19,10 +19,11 @@ from tasks.models import Bord, Note, Task
 from tasks.forms import NoteForm
 from storage.models import User_units
 from storage.models import Unit as Block
+from datetime import timedelta
 
 from calendar import monthrange
 import openpyxl
-from openpyxl.styles import  Border, Side, PatternFill, Font, Alignment
+from openpyxl.styles import  Border, Side
 #import pythoncom
 #from win32com import client
 import json
@@ -260,42 +261,6 @@ def del_vac_by_drop(request, otd, user_name, day):
             break
     return redirect('vacations', year, otd)
 
-
-def add_new_vac(request, otd, day_s, month_s, year_s, long: int, day_e, month_e, user_id):
-    if not vac_access_check(request):
-        return render(request, 'no_rights.html',)
-
-    date = dt.datetime.strptime(f'{year_s}-{month_s}-{day_s}', '%Y-%m-%d').date()
-    date_end = dt.datetime.strptime(f'{year_s}-{month_e}-{day_e}', '%Y-%m-%d').date()
-    vacation = Vacation()
-    vacation.user_id = user_id
-    vacation.day_start = date + dt.timedelta(days=1)
-
-    i = 1
-    if long != 0:
-        while i < long:
-            date += dt.timedelta(days=1)
-            i += 1
-            if date in holidays:
-                i -= 1
-
-        vacation.day_end = date + dt.timedelta(days=1)
-        vacation.how_long = long
-    else:
-        while date < date_end:
-            date += dt.timedelta(days=1)
-            i += 1
-            if date in holidays:
-                i -= 1
-
-        vacation.day_end = date_end + dt.timedelta(days=1)
-        vacation.how_long = i
-    vacation.year = year_s
-    vacation.can_redact = True
-    vacation.save()
-    return redirect('vac_2', year_s, otd)
-
-
 def get_key_from_dict_by_value(dict, value):
     return [k for k, v in dict.items() if v == value][0]
 
@@ -444,7 +409,6 @@ def vac_2(request, year, otd):
         vacations_by_user[vac.user.get_full_name()]['dates'].append(
             {'d': f"{vac.day_start.day} {month_num_str[vac.day_start.month][:3]} - {vac.day_end.day} {month_num_str[vac.day_end.month][:3]}",
             'vac_id': vac.id,
-            'vac_can_redact': vac.can_redact,
             }
         )
 
@@ -477,6 +441,7 @@ def vac_2(request, year, otd):
                             data[vac.user.get_full_name()] = {
                                 'date': f"{vac.day_start.date()} - {vac.day_end.date()}",
                                 'color': users_colors[vac.user.get_full_name()],
+                                'vac_id': vac.id,
                             }
 
                     m = [k for k, v in month_num_str.items() if v == month ][0]
@@ -494,7 +459,7 @@ def vac_2(request, year, otd):
 
     all_vac_for_js = {}
     for vac in vacations:
-        all_vac_for_js[vac.id] = [str(vac.day_start.date()), str(vac.day_end.date()), vac.how_long, vac.can_redact]
+        all_vac_for_js[vac.id] = [str(vac.day_start.date()), str(vac.day_end.date()), vac.how_long]
 
     
     return render(
@@ -1088,121 +1053,6 @@ def vacations_by_user(request, year, otd):
         'pdf': settings.BASE_DIR + f"/posts/static/users/vacations_{otd}.pdf",}
     )
 
-def vacation_new(request, year, otd):
-    if not vac_access_check(request):
-        return render(request, 'no_rights.html',)
-
-    vacation = Vacation()
-    vacation.user_id = request.user.id
-    form = VacationForm(
-        request.POST or None,
-        files=request.FILES or None,
-        instance=vacation,
-    )
-    if form.is_valid():
-        vac = form.save(commit=False)
-        if vac.day_start is None or vac.day_end is None or vac.day_start >= vac.day_end:
-            return render(
-                request,
-                'vacation_new.html',
-                {'form': form, 'user': request.user, **rights(request), 'year': year, 'otd': otd, }
-            )
-        vac.save()
-        return redirect('vac_2', year, otd)
-    return render(
-        request,
-        'vacation_new.html',
-        {'form': form, 'user': request.user, **rights(request), 'otd': otd, 'number': otd, 'year': year,
-        'bosses': bosses, 'pdf': settings.BASE_DIR + f"/posts/static/users/vacations_{otd}_{year}.pdf", }
-    )
-
-@login_required
-def vac_edit(request, otd, day_s, month_s, year_s, long: int, day_e, month_e, user_id, vac_id):
-    if not vac_access_check(request):
-        return render(request, 'no_rights.html',)
-
-    date = dt.datetime.strptime(f'{year_s}-{month_s}-{day_s}', '%Y-%m-%d').date()
-    date_end = dt.datetime.strptime(f'{year_s}-{month_e}-{day_e}', '%Y-%m-%d').date()
-
-    vacation = get_object_or_404(Vacation, id=vac_id)
-    vacation.user_id = user_id
-    vacation.day_start = date + dt.timedelta(days=1)
-
-    print(date)
-
-    i = 1
-    if long != 0:
-        while i < long:
-            date += dt.timedelta(days=1)
-            i += 1
-            if date in holidays:
-                i -= 1
-        print(date)
-        vacation.day_end = date + dt.timedelta(days=1)
-        vacation.how_long = long
-    else:
-        while date < date_end:
-            date += dt.timedelta(days=1)
-            i += 1
-            if date in holidays:
-                i -= 1
-        print(i)
-        vacation.day_end = date_end + dt.timedelta(days=1)
-        vacation.how_long = i
-    vacation.year = year_s
-    vacation.can_redact = True
-    vacation.save()
-    return redirect('vac_2', year_s, otd)
-
-def vacation_edit(request, year, otd, vac_id):
-    if not vac_access_check(request):
-        return render(request, 'no_rights.html',)
-
-    vac = get_object_or_404(Vacation, id=vac_id)
-    vac.day_start = str(vac.day_start)[:-15]
-    vac.day_end = str(vac.day_end)[:-15]
-    form = VacationForm(request.POST or None,
-                    files=request.FILES or None,
-                    instance=vac)
-    if form.is_valid():
-        vac = form.save(commit=False)
-        if vac.day_start >= vac.day_end:
-            return render(
-                request,
-                'vacation_new.html',
-                {'form': form, 'user': vac.user, **rights(request), 'vac_id': vac_id, 'otd': otd, }
-            )
-        vac.save()
-        return redirect('vac_2', year, otd)
-    return render(
-        request,
-        'vacation_new.html',
-        {
-            'form': form,
-            'user': request.user,
-            'edit': True,
-            **rights(request),
-            'vac_id': vac_id,
-            'otd': otd,
-            'number': otd,
-            'year': year,
-            'bosses': [key for key in bosses.keys()],
-        }
-    )
-
-@login_required
-def vacation_confirm(request, year, otd, vac_id):
-    if not vac_access_check(request):
-        return render(request, 'no_rights.html',)
-
-    vac = get_object_or_404(Vacation, id=vac_id)
-    if vac.can_redact:
-        vac.can_redact = False
-    else:
-        vac.can_redact = True
-    vac.save()
-    return redirect('vac_2', year, otd )
-
 @login_required
 def vacation_confirm_from_day(request, year, otd, user, day):
     if not vac_access_check(request):
@@ -1222,16 +1072,6 @@ def vacation_confirm_from_day(request, year, otd, user, day):
 
 
     return redirect('vacations', year, otd)
-
-@login_required
-def vacation_delete(request, otd, year, vac_id):
-    if not vac_access_check(request):
-        return render(request, 'no_rights.html',)
-
-    vac = get_object_or_404(Vacation, id=vac_id)
-    vac.delete()
-    return redirect('vac_2', year, otd)
-
 
 def paint_all_borders(full_len, start, mass, ws):
     thin = Side(border_style="thin", color="000000") # стиль границ
@@ -1387,7 +1227,6 @@ def vac_2_days(request, year, otd):
         vacations_by_user[vac.user.get_full_name()]['dates'].append(
             {'d': f"{vac.day_start.day} {month_num_str[vac.day_start.month][:3]} - {vac.day_end.day} {month_num_str[vac.day_end.month][:3]}",
             'vac_id': vac.id,
-            'vac_can_redact': vac.can_redact,
             }
         )
 
@@ -1562,7 +1401,6 @@ def vac_all(request, otd):
         vacations_by_user[vac.user.get_full_name()]['dates'].append(
             {'d': f"{vac.day_start.day} {month_num_str[vac.day_start.month][:3]} - {vac.day_end.day} {month_num_str[vac.day_end.month][:3]}",
             'vac_id': vac.id,
-            'vac_can_redact': vac.can_redact,
             }
         )
 
@@ -1711,9 +1549,15 @@ def vac_my_vacations(request):
             'period': f"{start_date.day} {months_ru[start_date.month]} {start_date.year} - {end_date.day} {months_ru[end_date.month]} {end_date.year}",
             'days_count': actual_days_count,
             'id': vac.id,
-            'can_redact': vac.can_redact,
             'is_current': start_date <= today <= vac.day_end.date(),
         })
+    
+    vacation_year = None
+    
+    for vacation in vacations_list:
+        start_date = vacation['period'].split(' ')[-1]
+        vacation_year = int(start_date)
+        vacation['vacation_year'] = vacation_year
 
     return render(
         request,
@@ -1721,6 +1565,7 @@ def vac_my_vacations(request):
         {
             'today': today,
             'year': year,
+            'vacation_year': vacation_year,
             'vacations_list': vacations_list,
             'show_button': True,
             'navbar_style': 'custom-navbar',
@@ -1815,7 +1660,6 @@ def vac_all_vacations(request):
             'period': f"{start_date.day} {months_ru[start_date.month]} {start_date.year} - {end_date.day} {months_ru[end_date.month]} {end_date.year}",
             'days_count': actual_days_count,
             'id': vac.id,
-            'can_redact': vac.can_redact,
             'is_current': start_date <= today.date() <= vac.day_end.date(),
             'department': department,
             'color': user_colors[user_name],
@@ -1886,6 +1730,7 @@ def vacation_detail(request, vac_id):
     adjusted_end_date = start_date + dt.timedelta(days=actual_days_count + holidays_in_vacation - 1)
 
     from_page = request.GET.get('from', None)
+    year = vacation.day_start.year
 
     return render(
         request,
@@ -1896,9 +1741,227 @@ def vacation_detail(request, vac_id):
             'days_count': actual_days_count,
             'vacation_user_name': vacation_user_name,
             'show_button': True,
+            'vacation': vacation,
             'navbar_style': 'custom-navbar',
             'bosses': list(bosses.keys()),
             'show_vacation_detail': True,
             'from_page': from_page,
+            'year': year,
         }
     )
+
+@login_required
+def vacation_new(request, year):
+    if not vac_access_check(request):  # Проверяем доступ к отпуску
+        return render(request, 'no_rights.html')
+
+    # Инициализация формы и модели отпуска
+    vacation = Vacation(user_id=request.user.id)
+    form = VacationForm(request.POST or None, files=request.FILES or None, instance=vacation)
+
+    # Определяем, является ли пользователь боссом
+    current_user_name = request.user.get_full_name()
+    is_boss = current_user_name in bosses
+
+    employees = None
+
+    employee_name = request.GET.get('employee_name', None)
+
+    if is_boss:
+        boss_departments = bosses[current_user_name]
+        department_ids = Unit.objects.filter(description__in=boss_departments).values_list('id', flat=True)
+        employees = User_info.objects.filter(otd_number_id__in=department_ids).select_related('user', 'position')
+
+    selected_employee_name = current_user_name
+    
+    if form.is_valid():
+        vac = form.save(commit=False)
+
+        if is_boss and 'employee' in request.POST:
+            selected_employee_id = request.POST['employee']
+            vac.user_id = selected_employee_id
+            selected_employee_name = User.objects.get(id=selected_employee_id).get_full_name()
+        else:
+            vac.user_id = request.user.id
+
+        if vac.day_end:
+            # Если дата окончания введена вручную, используем ее как есть
+            vac.day_end += timedelta(days=1)
+        elif vac.day_start and vac.how_long:
+            # Если указана дата начала и длительность отпуска, рассчитываем дату окончания
+            current_date = vac.day_start
+            remaining_days = int(vac.how_long)
+
+            while remaining_days > 0:
+                current_date += timedelta(days=1)
+                if current_date not in holidays:
+                    remaining_days -= 1
+
+            vac.day_end = current_date 
+        elif vac.day_start and vac.day_end:
+            # Если указаны обе даты, рассчитываем количество рабочих дней
+            delta_days = (vac.day_end - vac.day_start).days
+            working_days = 0
+            current_date = vac.day_start
+
+            while current_date < vac.day_end:
+                if current_date not in holidays:
+                    working_days += 1
+                current_date += timedelta(days=1)
+
+            vac.how_long = working_days
+
+        if vac.day_start:
+            vac.day_start += timedelta(days=1)
+
+        vac.save()
+
+        if employee_name:
+            return redirect('vac_2', year=year, otd=0)
+        elif 'employee' in request.POST and request.POST['employee'] != str(request.user.id):
+            return redirect(f'{reverse("vac_all_vacations")}?user={selected_employee_name}')
+        else:
+            return redirect('vac_my_vacations')
+
+    current_holidays = holidays.get(year, {})
+    holidays_json = json.dumps(current_holidays)
+    
+    context = {
+        'form': form,
+        'user': request.user,
+        'employees': employees,
+        'is_boss': is_boss,
+        'navbar_style': 'custom-navbar',
+        'bosses': list(bosses.keys()),
+        'year': year,
+        'show_person': True,
+        'holidays_json': holidays_json,
+        'employee_name': employee_name,
+    }
+
+    return render(request, 'vacation_new.html', context)
+
+@login_required
+def vacation_edit(request, year, vac_id):
+    if not vac_access_check(request):  
+        return render(request, 'no_rights.html')
+
+    vac = get_object_or_404(Vacation, id=vac_id)
+
+    if vac.day_start and vac.day_end:
+        delta_days = (vac.day_end - vac.day_start).days
+        working_days = 0
+        current_date = vac.day_start
+
+        while current_date <= vac.day_end:
+            if current_date not in holidays.get(year, []): 
+                working_days += 1
+            current_date += timedelta(days=1)
+
+        vac.how_long = working_days
+
+    vac.day_start = str(vac.day_start)[:-15]
+    vac.day_end = str(vac.day_end)[:-15]
+
+    form = VacationForm(request.POST or None, files=request.FILES or None, instance=vac)
+
+    # Получаем имя и должность сотрудника, связанного с текущим отпуском
+    employee_name = vac.user.get_full_name()
+    employee_position = None
+    if hasattr(vac.user, 'user_info'):
+        user_info = vac.user.user_info.first() 
+        if user_info and user_info.position:
+            employee_position = user_info.position.position
+
+    if form.is_valid():
+        vac = form.save(commit=False)
+
+        if vac.day_end:
+            vac.day_end += timedelta(days=1)
+        elif vac.day_start and vac.how_long:
+            current_date = vac.day_start
+            remaining_days = int(vac.how_long)
+
+            while remaining_days > 0:
+                current_date += timedelta(days=1)
+                if current_date not in holidays.get(year, []): 
+                    remaining_days -= 1
+
+            vac.day_end = current_date
+        elif vac.day_start and vac.day_end:
+            delta_days = (vac.day_end - vac.day_start).days
+            working_days = 0
+            current_date = vac.day_start
+
+            while current_date < vac.day_end:
+                if current_date not in holidays.get(year, []):  
+                    working_days += 1
+                current_date += timedelta(days=1)
+
+            vac.how_long = working_days
+
+        if vac.day_start:
+            vac.day_start += timedelta(days=1)
+
+        if vac.day_start >= vac.day_end:
+            return render(
+                request,
+                'vacation_edit.html',
+                {
+                    'form': form,
+                    **rights(request),
+                    'vac_id': vac_id,
+                }
+            )
+
+        vac.save()
+        from_param = request.GET.get('from')
+
+        if from_param == 'calendars':
+            return redirect('vac_2', year=year, otd=0)
+        elif from_param == 'all_vacations':
+            return redirect(f'{reverse("vac_all_vacations")}?user={employee_name}')
+        else:
+            return redirect('vac_my_vacations')
+
+    current_holidays = holidays.get(year, {})
+    holidays_json = json.dumps(current_holidays)
+    
+    return render(
+        request,
+        'vacation_edit.html',
+        {
+            'form': form,
+            'user': request.user,
+            'edit': True,
+            **rights(request),
+            'vac_id': vac_id,
+            'year': year,
+            'value': vac,
+            'employee_name': employee_name,
+            'employee_position': employee_position, 
+            'navbar_style': 'custom-navbar',
+            'bosses': list(bosses.keys()),
+            'redact_vac': True,
+            'show_button': True,
+            'holidays_json': holidays_json,
+        }
+    )
+
+@login_required
+def vacation_delete(request, vac_id):
+    if not vac_access_check(request):
+        return render(request, 'no_rights.html',)
+    
+    redirect_from = request.GET.get('from', None)
+
+    vac = get_object_or_404(Vacation, id=vac_id)
+    year = vac.day_start.year
+    vac.delete()
+
+    if redirect_from == 'calendars':
+        return redirect('vac_2', year=year, otd=0)
+    elif redirect_from == 'all_vacations':
+        return redirect('vac_all_vacations') 
+    else:
+        return redirect('vac_my_vacations')

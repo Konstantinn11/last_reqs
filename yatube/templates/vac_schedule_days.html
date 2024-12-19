@@ -568,6 +568,15 @@
 		bottom: -10px; /* Смещение стрелочки вниз */
 		z-index: 300; /* Отправляем стрелочку под тултип */
 	}
+
+	.redact {
+		color: #15a362;
+		text-decoration: underline;
+	}
+
+	.redact:hover {
+		color: green;
+	}
 </style>
 {% endblock %}
 
@@ -595,17 +604,19 @@
 		<tr style="border-bottom: 1px solid black;">
 			<th style="text-align: left;">Сотрудник</th><th>Отдел</th><th>Дней</th>
 			<th style="display: none;">Дата отпуска</th><th style="display: none;">Календарных дней</th><th style="display: none;">Дата окончания</th>
+			<th>Идентификаторы отпусков</th>
 		</tr>
 		{% for key, value in vacations_by_user.items %}
 			<tr style="border-bottom: 1px solid rgb(187, 185, 185); height: 40px;"
 				class="vacation-cell" 
 				data-employee-name="{{key}}" 
 				data-start-date="{% for start_date, days_count in value.vacation_start_dates %}{{start_date}}{% if not forloop.last %}, {% endif %}{% endfor %}" 
-				data-end-date="{% for end_date in value.vacation_end_dates %}{{end_date}}{% if not forloop.last %}, {% endif %}{% endfor %}">
+				data-end-date="{% for end_date in value.vacation_end_dates %}{{end_date}}{% if not forloop.last %}, {% endif %}{% endfor %}"
+				data-vac-id="{% for vac in value.dates %}{{ vac.vac_id }}{% if not forloop.last %}, {% endif %}{% endfor %}">
 				<th style="text-align: left;">
 					<div style="display: flex; flex-direction: row; justify-content: left; align-items: center;">
 						<div style="width: 15px; height: 15px; background: {{value.color}}; border: 1px solid black; margin-right: 6px;"></div>
-						<a style="color: black" href="#" onclick="filtrByUser(this)">{{key}}</a>
+						<a style="color: black" href="#">{{key}}</a>
 					</div>
 				</th>
 				<th>{{value.otd }}</th>
@@ -629,53 +640,23 @@
 				<th style="display: none;">
 					<ul style="list-style-type: none; padding: 0; text-align: center;">
 						{% for end_date in value.vacation_end_dates %}
-							<li>{{ end_date }}</li> <!-- Дата окончания отпуска -->
+							<li>{{ end_date }}</li> 
 						{% endfor %}
 					</ul>
 				</th>
+
+				<th>
+                    <ul style="list-style-type: none; padding: 0; text-align: center;">
+                        {% for vac in value.dates %}
+                            <li>{{ vac.vac_id }}</li>
+                        {% endfor %}
+                    </ul>
+                </th>
 			</tr>
 		{% endfor %}
 	</table>
-	<div style="border: 1px solid rgb(187, 185, 185); padding: 5px;">
-		<div id="no_vacation_message">В данный момент нет сотрудников в отпуске.</div>
-		<div id="info" style="margin-top: 20px; border: 1px solid rgb(187, 185, 185);"></div>
-	</div>
 </div>
-<div id="add_new_vac" style="display: none; flex-direction: column; justify-content: top; align-items: center; position: absolute; left: 420px; top: 150px;
-	border: 1px solid black; width: 280px; height: 360px auto; background: rgb(187, 185, 185); opacity: 0.9;">
-	<div style="display: flex; flex-direction: row; justify-content: right; align-items: right; margin: 10px; width: 250px;">
-		<div style="background: white; width: 30px; height: 30px; border-radius: 3px;">
-			<div style="transform: rotate(-45deg); width: 30px; height: 30px; font-size: 18px; cursor: pointer;" onclick="closeForm()">+</div>
-		</div>
-	</div>
-	<div style="width: 250px; padding: 2px 5px; color:black;">Сотрудник</div>
-	<select name="filtr_user" id="filtr_user" style="font-size: 18px; padding: 2px 5px; border: 1px solid rgb(206, 202, 202); color: #808080; font-family: 'Calibri';
-									font-style: normal; font-weight: 400; line-height: 22px; width: 250px; height: 35px; cursor: pointer;">
-		{% for user in otd_users_full_names %}
-			<option id="{{user.id}}" value="{{user.get_full_name}}">{{user.get_full_name}}</option>
-		{% endfor %}
 
-	</select>
-	<div style="width: 250px; padding: 2px 5px; color:black;">Дата начала</div>
-	<input id="day_start" style="width: 250px; padding: 2px 5px; border: 1px solid rgb(206, 202, 202);" type="date"/>
-	<div style="width: 250px; padding: 2px 5px; color:black;">Дата завершения</div>
-	<input id="day_end" style="width: 250px; padding: 2px 5px; border: 1px solid rgb(206, 202, 202);" type="date"/>
-	<div style="width: 250px; padding: 2px 5px; color:black;">Продолжительность (дней)</div>
-	<input id="days_long" style="width: 250px; padding: 2px 5px; border: 1px solid rgb(206, 202, 202);" title="если поле заполнено, то дата завершения рассчитывается, а не берется из поля выше"/>
-	<a id="add_btn" class="btn sib" style="background: #15a362; width: 250px;  margin: 10px;" href="#" onclick="createVac()">
-		<div style="cursor: pointer; justify-content: center; align-items: center;">
-			<img style="height: 20px; margin-right: 5px;" src={% static "trello_plus.png" %}>
-		</div>
-		Добавить
-	</a>
-	{% if request.user.get_full_name in bosses %}
-		<a id="can_redact" name="can_redact" class="btn sib" style="display: none; background: #15a362; width: 250px;  margin: 10px;" href="#" onclick="confirmVac(this)">Подтвердить</a>
-	{% else %}
-		<a id="mulaj" name="can_redact" style="display: none;" href="#"></a>
-	{% endif %}
-	<a id="vac_delete" class="btn sib" style="display: none; background: #15a362; width: 250px;  margin: 10px;" href="#" onclick="deleteVac(this)">Удалить</a>
-	<a id="hide_vac_idid" style="display: none; " href="#">vac_id</a>	
-</div>
 <script>
 	const bosses = JSON.parse('{{ bosses_list|escapejs }}');
 	const currentUser = "{{ current_user_name|escapejs }}";
@@ -684,23 +665,18 @@
         return bosses.includes(userName);
     }
 	
-	// Используем уже существующую функцию для получения параметров
 	function generateCalendarFromURL() {
 		const filters = getURLParameters();
 
-		// Проверяем наличие параметра года
 		let selectedYear = filters.year ? parseInt(filters.year) : 2024;
 
-		// Генерируем календарь для указанного или текущего года
 		generateCalendar(selectedYear);
 	}
 	
-	// Функция для определения, является ли год високосным
 	function isLeapYear(year) {
 		return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
 	}
 
-	// Функция для получения первого дня недели года
 	function getFirstWeekday(year) {
 		const firstDay = new Date(year, 0, 1);
 		return firstDay.getDay();
@@ -764,17 +740,16 @@
 					dayDiv.classList.add('day');
 					dayDiv.innerText = day;
 
-					// Вычисляем порядковый номер дня в году для текущего дня
 					const currentDayInMonth = new Date(currentYear, months.indexOf(month), day);
-					const dayOfYear = getDayOfYear(currentDayInMonth); // Получаем порядковый номер дня в году
+					const dayOfYear = getDayOfYear(currentDayInMonth); 
 
 					if (dayOfYear === currentDayOfYear && year === today.getFullYear()) {
 						// Добавляем синюю точку
 						const blueDot = document.createElement('div');
-						blueDot.classList.add('blue-dot'); // Добавляем класс вместо стилизации
+						blueDot.classList.add('blue-dot'); 
 
-						dayDiv.style.position = 'relative'; // Устанавливаем относительное позиционирование для dayDiv
-						dayDiv.appendChild(blueDot); // Добавляем точку в ячейку дня
+						dayDiv.style.position = 'relative'; 
+						dayDiv.appendChild(blueDot); 
 					}
 
 					daysContainer.appendChild(dayDiv);
@@ -793,10 +768,8 @@
 			});
 		}
 
-		// Генерация первого блока календаря
 		populateCalendar(monthsContainer, daysContainer, weekdaysContainer, true);
 
-		// Прокрутка к текущему дню только для текущего года
 		const currentYear = new Date().getFullYear();
 		if (year === currentYear) {
 			scrollToToday();
@@ -806,12 +779,12 @@
 	// Функция для прокрутки к текущему дню
 	function scrollToToday() {
 		const today = new Date();
-		const dayOfYear = getDayOfYear(today); // Индекс текущего дня в году
+		const dayOfYear = getDayOfYear(today); 
 
 		const calendarContainer = document.querySelector('.calendar-container');
-		const dayWidth = 30; // ширина одного дня
-		const containerWidth = calendarContainer.clientWidth; // ширина контейнера
-		const offset = (containerWidth / 2) - (dayWidth / 2); // смещение для центрирования
+		const dayWidth = 30; 
+		const containerWidth = calendarContainer.clientWidth; 
+		const offset = (containerWidth / 2) - (dayWidth / 2); 
 
 		const paddingLeft = 14;
 		
@@ -855,6 +828,8 @@
 		return `${year}-${month}-${day}`;
 	}
 
+	const year = "{{ year }}";
+
 	function drawVacationRects() {
 		const originalInfoRow = document.getElementById('info-row'); 
 		const originalMiddleSection = document.querySelector('.middle-section');
@@ -884,7 +859,7 @@
 
 		const today = new Date();
 		const todayDayOfYear = getDayOfYear(today);   
-		const daysInYear = isLeapYear(selectedYear) ? 366 : 365; // Используем selectedYear для расчета дней в году
+		const daysInYear = isLeapYear(selectedYear) ? 366 : 365; 
 
 		// Создаем элемент для тултипа
 		const tooltip = document.createElement('div');
@@ -905,6 +880,7 @@
 			const employeeName = cell.getAttribute('data-employee-name');
 			const startDates = cell.getAttribute('data-start-date').split(', ');
 			const endDates = cell.getAttribute('data-end-date').split(', ');
+			const vacIds = cell.getAttribute('data-vac-id').split(', ');
 
 			const colorSquare = cell.querySelector('div[style*="background"]');
 			const color = colorSquare ? colorSquare.style.backgroundColor : 'white';
@@ -912,7 +888,7 @@
 			// Клонируем и добавляем middle-section для сотрудника
 			const newMiddleSection = originalMiddleSection.cloneNode(true);
 			newMiddleSection.style.display = 'flex';
-			newMiddleSection.innerHTML = '';  // Очищаем содержимое клона
+			newMiddleSection.innerHTML = ''; 
 
 			const nameElement = document.createElement('div');
 			nameElement.innerText = employeeName;
@@ -921,13 +897,13 @@
 
 			originalMiddleSection.parentNode.appendChild(newMiddleSection);
 
-			// Клонируем и добавляем info-row для сотрудника
 			const newInfoRow = originalInfoRow.cloneNode(true);
 			newInfoRow.style.display = 'flex';
 			newInfoRow.innerHTML = '';
 
 			startDates.forEach((startDate, index) => {
 				const endDate = endDates[index];
+				const vacId = vacIds[index];
 				const startFormatted = formatDateString(startDate);
 				const endFormatted = formatDateString(endDate);
 
@@ -947,6 +923,9 @@
 						rect.style.top = '0';
 						rect.style.backgroundColor = color;
 
+						rect.setAttribute('data-vac-id', vacId);
+						console.log(`Rect created with data-vac-id: ${rect.getAttribute('data-vac-id')}`);
+
 						const nameInRect = document.createElement('div');
 						nameInRect.innerText = employeeName;
 						nameInRect.classList.add('vacation-text');
@@ -959,34 +938,31 @@
 						darkOverlay.style.left = '0';
 						darkOverlay.style.height = '100%';
 						darkOverlay.style.width = '100%';
-						darkOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.1)'; // Полупрозрачный черный цвет
-						darkOverlay.style.opacity = '0'; // Скрываем затемняющий слой
-						darkOverlay.style.transition = 'opacity 0.2s ease'; // Плавный переход
+						darkOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.1)'; 
+						darkOverlay.style.opacity = '0'; 
+						darkOverlay.style.transition = 'opacity 0.2s ease'; 
 
-						// Добавляем затемняющий слой в прямоугольник
 						rect.appendChild(darkOverlay);
 
-						// Добавляем эффект затемнения при наведении
 						rect.addEventListener('mouseenter', () => {
-							darkOverlay.style.opacity = '1'; // Показать затемняющий слой
-							rect.style.cursor = 'pointer'; // Меняем курсор
+							darkOverlay.style.opacity = '1'; 
+							rect.style.cursor = 'pointer'; 
 						});
 
-						// Возвращаем цвет и курсор при уходе курсора
 						rect.addEventListener('mouseleave', () => {
-							darkOverlay.style.opacity = '0'; // Скрыть затемняющий слой
-							rect.style.cursor = 'ew-resize'; // Возвращаем оригинальный курсор
+							darkOverlay.style.opacity = '0';
+							rect.style.cursor = 'ew-resize'; 
 						});						
 
 						let tooltipTimeout;
 
 						// Добавляем обработчик событий для показа тултипа
 						rect.addEventListener('mouseenter', () => {
-							// Создаем новый элемент для тултипа, чтобы можно было иметь несколько
 							const newTooltip = tooltip.cloneNode(true);
 							newTooltip.style.visibility = 'visible';
 
-							// Формируем HTML-разметку тултипа
+							const editUrl = `/auth/vacations/vacation_edit/${year}/${vacId}/?from=calendars`;
+
 							newTooltip.innerHTML = `
 								<div class="tooltip-content">
 									<div style="text-align: center;">
@@ -998,9 +974,8 @@
 									<!-- Проверка, является ли employeeName текущим пользователем или находится в списке боссов -->
 									<div style="margin-bottom: 2px; margin-left: 1px;">
 										${isBoss(currentUser) || currentUser === employeeName ? `
-											<a href="#" 
-												style="text-decoration: underline; color: #808000" 
-												onclick="showEditAlert(event)">
+											<a href="${editUrl}"
+												class="redact">
 												редактировать
 											</a>
 										` : ''}
@@ -1012,38 +987,34 @@
 							// Добавляем новый тултип в документ
 							document.body.appendChild(newTooltip);
 
-							// Получаем размеры и положение прямоугольника
 							const rectBounds = rect.getBoundingClientRect();
 
-							// Используем requestAnimationFrame для получения размеров тултипа
 							requestAnimationFrame(() => {
 								const tooltipHeight = newTooltip.offsetHeight;
 								const tooltipWidth = newTooltip.offsetWidth;
 
-								// Устанавливаем положение тултипа
-								const offset = 10; // Отступ между тултипом и прямоугольником
-								newTooltip.style.top = `${rectBounds.top - tooltipHeight - offset}px`; // Высчитываем позицию по Y
-								newTooltip.style.left = `${rectBounds.left + (rectBounds.width - tooltipWidth) / 2}px`; // Центрируем по X
+								const offset = 10; 
+								newTooltip.style.top = `${rectBounds.top - tooltipHeight - offset}px`; 
+								newTooltip.style.left = `${rectBounds.left + (rectBounds.width - tooltipWidth) / 2}px`; 
 
-								// Убираем тултип с задержкой, если курсор не над тултипом
 								const handleMouseLeave = () => {
 									tooltipTimeout = setTimeout(() => {
 										if (!newTooltip.matches(':hover')) {
 											newTooltip.style.visibility = 'hidden';
-											document.body.removeChild(newTooltip); // Удаляем тултип из документа
+											document.body.removeChild(newTooltip); 
 										}
-									}, 600); // Установка задержки на 600 мс перед скрытием тултипа
+									}, 600); 
 								};
 
 								rect.addEventListener('mouseleave', handleMouseLeave);
 
-								// Добавляем обработчик события для скрытия тултипа при уходе курсора с него
+								// Добавляем обработчик события для скрытия тултипа
 								newTooltip.addEventListener('mouseleave', () => {
-									clearTimeout(tooltipTimeout); // Убираем задержку, если курсор над тултипом
+									clearTimeout(tooltipTimeout); 
 									tooltipTimeout = setTimeout(() => {
 										newTooltip.style.visibility = 'hidden';
-										document.body.removeChild(newTooltip); // Удаляем тултип из документа
-									}, 600); // Установка задержки на 600 мс перед скрытием тултипа
+										document.body.removeChild(newTooltip); 
+									}, 600); 
 								});
 							});
 						});
@@ -1074,14 +1045,14 @@
 	
 	// Функция для форматирования даты без года
 	function formatDateWithoutYear(date) {
-		const options = { day: 'numeric', month: 'long' }; // Формат с днём и месяцем
-		return new Date(date).toLocaleDateString('ru-RU', options); // Локализованный формат на русском
+		const options = { day: 'numeric', month: 'long' }; 
+		return new Date(date).toLocaleDateString('ru-RU', options); 
 	}
 
-	// Генерация календаря при загрузке страницы с учётом года из URL
+
 	document.addEventListener('DOMContentLoaded', () => {
-		generateCalendarFromURL(); // Генерируем календарь на основе URL
-		drawVacationRects(); // Рисуем прямоугольники для отпусков
+		generateCalendarFromURL(); 
+		drawVacationRects(); 
 		addNewTopSectionAndRows();
 	});
 
@@ -1089,25 +1060,21 @@
 		// Найдем последний блок middle-section
 		const lastMiddleSection = document.querySelector('.calendar-container .middle-section:last-of-type');
 
-		// Найдем и клонируем блок top-section
 		const topSection = document.querySelector('.top-section');
 		const newTopSection = topSection.cloneNode(true);
 		newTopSection.style.borderBottom = 'none';
 
-		// Вставляем клонированный блок под последний middle-section
 		lastMiddleSection.insertAdjacentElement('afterend', newTopSection);
 
-		// Найдем последний блок info-row
 		const lastInfoRow = document.querySelector('.calendar-container .info-row:last-of-type');
 
-		// Клонируем строки для месяцев, дней и дней недели
 		const originalMonths = document.getElementById('months');
 		const originalDays = document.getElementById('days');
 		const originalWeekdays = document.getElementById('weekdays');
 
-		const newMonthsRow = originalMonths.cloneNode(true); // Копируем строки для месяцев
-		const newDaysRow = originalDays.cloneNode(true); // Копируем строки для дней
-		const newWeekdaysRow = originalWeekdays.cloneNode(true); // Копируем строки для дней недели
+		const newMonthsRow = originalMonths.cloneNode(true);
+		const newDaysRow = originalDays.cloneNode(true); 
+		const newWeekdaysRow = originalWeekdays.cloneNode(true); 
 
 		// Присваиваем уникальные ID новым строкам
 		newMonthsRow.id = 'new-months';
@@ -1120,16 +1087,16 @@
 		newDaysRow.insertAdjacentElement('afterend', newWeekdaysRow);
 
 		// Изменение положения синей точки в клонированных строках
-		const blueDots = newDaysRow.querySelectorAll('.blue-dot'); // Найти синюю точку в новом ряду
+		const blueDots = newDaysRow.querySelectorAll('.blue-dot'); 
 
 		blueDots.forEach(dot => {
-			dot.style.bottom = '65px'; // Измените значение по оси Y по вашему усмотрению
+			dot.style.bottom = '65px'; 
 		});
 	}
 
 	document.addEventListener('DOMContentLoaded', () => {
 		const calendarContainer = document.querySelector('.calendar-container');
-		const tooltipElements = document.querySelectorAll('.vacation-rect'); // Элементы, для которых показываются тултипы
+		const tooltipElements = document.querySelectorAll('.vacation-rect'); 
 		let isDragging = false;
 		let startX;
 		let scrollLeft;
@@ -1137,44 +1104,39 @@
 		// Функция для отключения тултипов
 		function disableTooltips() {
 			tooltipElements.forEach(element => {
-				element.style.pointerEvents = 'none'; // Отключаем наведение и тултипы
+				element.style.pointerEvents = 'none'; 
 			});
 		}
 
-		// Функция для включения тултипов
 		function enableTooltips() {
 			tooltipElements.forEach(element => {
-				element.style.pointerEvents = ''; // Включаем наведение и тултипы обратно
+				element.style.pointerEvents = ''; 
 			});
 		}
 
-		// Начало перетаскивания
 		calendarContainer.addEventListener('mousedown', (e) => {
 			isDragging = true;
 			startX = e.pageX - calendarContainer.offsetLeft;
 			scrollLeft = calendarContainer.scrollLeft;
-			disableTooltips(); // Отключаем тултипы
+			disableTooltips();
 		});
 
-		// Перетаскивание
 		calendarContainer.addEventListener('mousemove', (e) => {
-			if (!isDragging) return; // Если не перетаскиваем, выходим
-			e.preventDefault(); // Предотвращаем выделение текста
+			if (!isDragging) return; 
+			e.preventDefault(); 
 			const x = e.pageX - calendarContainer.offsetLeft;
-			const walk = (x - startX) * 2; // Увеличиваем скорость перемещения (по желанию)
+			const walk = (x - startX) * 2; 
 			calendarContainer.scrollLeft = scrollLeft - walk;
 		});
-
-		// Окончание перетаскивания
+  
 		calendarContainer.addEventListener('mouseup', () => {
 			isDragging = false;
-			enableTooltips(); // Включаем тултипы обратно
+			enableTooltips(); 
 		});
 
-		// Убираем состояние перетаскивания при выходе мыши
 		calendarContainer.addEventListener('mouseleave', () => {
 			isDragging = false;
-			enableTooltips(); // Включаем тултипы обратно
+			enableTooltips(); 
 		});
 	});
 
@@ -1183,225 +1145,5 @@
 	}
 	let data = JSON.parse("{{json_data|escapejs}}");
 	let vacs = JSON.parse("{{json_data_vacs|escapejs}}");
-
-	let canRedact = document.getElementById('can_redact');
-	let vacDelete = document.getElementById('vac_delete');
-	let hide_vac_idid = document.getElementById('hide_vac_idid');
-	let add_btn = document.getElementById('add_btn');
-
-	function openFormCreateVac(obj) {
-		
-		closeForm();
-		
-		let form = document.getElementById('add_new_vac');
-		form.style.display = "flex";
-
-		form.style.position = "absolute"; // или "fixed", если нужно
-		form.style.top = "135px"; // Установите нужное значение
-		form.style.left = "954px"; // Установите нужное значение
-
-		form.style.zIndex = "500";
-
-		add_btn.childNodes[1].style.display = "flex";
-		add_btn.childNodes[2].textContent = "Добавить";
-		add_btn.onclick = createVac;
-
-		if (obj.id.split('_')[0] == "creat") {
-			document.getElementById('filtr_user').value = obj.id.split('_')[2];
-		}
-	}
-	
-	function openFormEditVac(obj) {
-		closeForm();
-		
-		let months = {'Янв': '01', 'Фев': '02', 'Мар': '03', 'Апр': '04', 'Май': '05', 'Июн': '06',
-		'Июл': '07', 'Авг': '08', 'Сен': '09', 'Окт': '10', 'Ноя': '11', 'Дек': '12',};
-		let form = document.getElementById('add_new_vac');
-		let vac = vacs[obj.id.split('_')[1]]
-
-
-		hide_vac_idid.textContent = obj.id.split('_')[1];
-		
-
-		add_btn.childNodes[1].style.display = "none";
-		add_btn.childNodes[2].textContent = "Редактировать";
-		add_btn.onclick = redactVac;
-		
-
-		document.getElementById('filtr_user').value = obj.id.split('_')[0];
-		document.getElementById('day_start').value = vac[0];
-		document.getElementById('day_end').value = vac[1];
-		document.getElementById('days_long').value = vac[2];
-		
-		let user_id = 0;
-		let options = document.getElementsByTagName('option');
-		for (let i = 0; i < options.length; i++) {
-			if (options[i].textContent == obj.id.split('_')[0]) {
-				user_id = options[i].id;
-			}
-		}
-		form.style.height = "500px auto";
-		
-		vacDelete.style.display = "flex";
-		vacDelete.id = 'del_' + obj.id.split('_')[1];
-		let canRedact = document.getElementsByName('can_redact')[0];
-		
-
-		if (vac[3]) {
-			if (canRedact.id != "mulaj"){
-				canRedact.textContent = "Подтвердить";
-			}	
-		}else {
-			if (canRedact.id != "mulaj"){
-				canRedact.textContent = "Отклонить";
-			}
-			
-			vacDelete.style.display = "none";
-		}
-		if (canRedact.id != "mulaj"){
-			canRedact.style.display = "flex";
-		}
-		
-		form.style.display = "flex";
-		//canRedact.id = 'red_' + obj.id.split('_')[1];
-	}
-	
-	function closeForm() {
-		let form = document.getElementById('add_new_vac');
-		form.style.height = "360px auto";
-		
-		document.getElementById('filtr_user').value = '';
-		document.getElementById('day_start').value = '';
-		document.getElementById('day_end').value = '';
-		document.getElementById('days_long').value = '';
-		
-
-		vacDelete.style.display = "none";
-
-		let canRedact = document.getElementsByName('can_redact')[0];
-		canRedact.style.display = "none";
-		form.style.display = "none";
-		
-	}
-	function deleteVac(obj) {
-		let url = "{% url 'vacation_delete' otd year 99 %}";
-		//alert(url);
-		let arrayFromUrl = url.split('/');
-		arrayFromUrl[6] = obj.id.split('_')[1];
-		let new_url = arrayFromUrl.join("/");
-		//alert(new_url);
-		location.href=new_url;	
-	}
-	function redactVac() {
-		let filtr_user = document.getElementById('filtr_user').value;
-		let options = document.getElementsByTagName('option');
-		let user_id = 0;
-		for (let i = 0; i < options.length; i++) {
-			if (options[i].textContent == filtr_user) {
-				user_id = options[i].id;
-			}
-		}
-		let day_start = document.getElementById('day_start').value;
-		let day_end = document.getElementById('day_end').value;
-		let days_long = document.getElementById('days_long').value;
-		let months = {'января': '01', 'февраля': '02', 'марта': '03', 'апреля': '04', 'мая': '05', 'июня': '06',
-		'июля': '07', 'августа': '08', 'сентября': '09', 'октября': '10', 'ноября': '11', 'декабря': '12',};
-
-
-		let day = day_start.split('-')[2];
-		let month = day_start.split('-')[1];
-		let year = day_start.split('-')[0];
-
-		let day_e = day_end.split('-')[2];
-		let month_e = day_end.split('-')[1];
-		let year_e = day_end.split('-')[0];
-		let vac_id = hide_vac_idid.textContent;
-		let url = "{% url 'vac_edit' otd 99 99 year 99 99 99 99 99 %}";
-		let arrayFromUrl = url.split('/');
-		arrayFromUrl[5] = day;
-		arrayFromUrl[6] = month;
-		if (!isNaN(days_long) & days_long != '') {
-			arrayFromUrl[8] = days_long;
-		} else {
-			arrayFromUrl[8] = '0';
-		}
-		arrayFromUrl[9] = day_e;
-		arrayFromUrl[10] = month_e;
-		arrayFromUrl[11] = user_id;
-		arrayFromUrl[12] = vac_id;
-		let new_url = arrayFromUrl.join("/");
-
-		if (day_start == '') {
-			alert('Введите дату начала отпуска!')
-		} else{
-			if (day_end == '') {
-				alert('Введите дату окончания отпуска!')
-			} else {
-				location.href=new_url;
-			}
-			
-		}
-	}
-	function confirmVac(obj) {
-
-		let url = "{% url 'vacation_confirm' year otd 99 %}";
-		let arrayFromUrl = url.split('/');
-		arrayFromUrl[6] = hide_vac_idid.textContent;
-		let new_url = arrayFromUrl.join("/");
-		location.href=new_url;	
-
-	}
-	function createVac() {
-		let filtr_user = document.getElementById('filtr_user').value;
-		let options = document.getElementsByTagName('option');
-		let user_id = 0;
-		for (let i = 0; i < options.length; i++) {
-			if (options[i].textContent == filtr_user) {
-				user_id = options[i].id;
-			}
-		}
-		let day_start = document.getElementById('day_start').value;
-		let day_end = document.getElementById('day_end').value;
-		let days_long = document.getElementById('days_long').value;
-		
-		let months = {'января': '01', 'февраля': '02', 'марта': '03', 'апреля': '04', 'мая': '05', 'июня': '06',
-		'июля': '07', 'августа': '08', 'сентября': '09', 'октября': '10', 'ноября': '11', 'декабря': '12',};
-
-
-		let day = day_start.split('-')[2];
-		let month = day_start.split('-')[1];
-		let year = day_start.split('-')[0];
-
-		let day_e = day_end.split('-')[2];
-		let month_e = day_end.split('-')[1];
-		let year_e = day_end.split('-')[0];
-
-		let url = "{% url 'add_new_vac' otd 99 99 year 99 99 99 99 %}";
-		let arrayFromUrl = url.split('/');
-		arrayFromUrl[5] = day;
-		arrayFromUrl[6] = month;
-		if (!isNaN(days_long) & days_long != '') {
-			arrayFromUrl[8] = days_long;
-		} else {
-			arrayFromUrl[8] = '0';
-		}
-		arrayFromUrl[9] = day_e;
-		arrayFromUrl[10] = month_e;
-		arrayFromUrl[11] = user_id;
-		let new_url = arrayFromUrl.join("/");
-		if (user_id == 0) {
-			alert('Выберите пользователя!')	
-		} else {
-			if (day_start == '') {
-				alert('Введите дату начала отпуска!')
-			} else{
-				if (day_end == '') {
-					alert('Введите дату окончания отпуска!')
-				} else {
-					location.href=new_url;
-				}					
-			}
-		}						
-	}
 </script>
 {% endblock %}

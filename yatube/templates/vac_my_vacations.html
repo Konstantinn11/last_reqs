@@ -12,12 +12,11 @@
     /* Стили таблицы и кнопок */
     .btn-icon { border: none; background: none; cursor: pointer; }
     .btn-icon img { width: 28px; height: 28px; }
-    .table-container { width: 1275px; display: flex; flex-direction: row; margin-top: 20px; margin-left: 360px; border: 1px solid #ccc; box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1); border-radius: 5px; }
+    .table-container { width: 1275px; display: flex; flex-direction: row; margin-top: 20px; margin-left: 360px; box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2); border-collapse: collapse; border-radius: 5px; }
     .custom-table { width: 1275px; border-collapse: collapse; }
     .custom-table th, .custom-table td { text-align: left; border-bottom: 1px solid rgb(187, 185, 185); padding: 10px; font-size: 18px; vertical-align: middle; }
     .custom-table th { color: #5d6778; }
     .custom-table .employee-cell { display: flex; flex-direction: row; justify-content: left; align-items: center; }
-    .vacation-row { background-color: #d4e2f9; }
     .darker { color: #15a362; font-size: 19px; text-decoration: underline; font-style: italic; }
     .darker:hover { color: green; }
     .vacation-cell:hover { background-color: rgba(0, 0, 0, 0.01); transition: background-color 0.3s ease; }
@@ -25,6 +24,11 @@
     #leave-dropdown-my { padding: 6px; box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1); }
     #leave-dropdown-my ul { padding: 6px 0; text-align: center; list-style-type: none; margin: 0; }
     #leave-dropdown-my ul li { margin: 6px 0; }
+    .vacation-link { display: block; background-color: white; color: #000; text-decoration: none; padding: 10px; margin: -10px; transition: background-color 0.3s ease; border-radius: 5px; }
+    .vacation-link:hover { background-color: rgba(93, 103, 120, 0.05); }
+    .btn.sib:hover { background-color: rgba(21, 163, 98, 0.8) !important; }
+    .custom-table tr:last-child td { border-bottom: none; }
+    .no-border-row td { border-bottom: none !important; padding-bottom: 5px; }
 </style>
 {% endblock %}
 
@@ -42,7 +46,7 @@
             <th>Действия</th>
         </tr>
         {% for vacation in vacations_list %}
-        <tr class="vacation-cell {% if vacation.is_current %}vacation-row{% endif %}">
+        <tr class="vacation-cell">
             <td>
                 <a class="darker" href="{% url 'vacation_detail' vacation.id %}">{{ vacation.period }}</a>
             </td>
@@ -51,12 +55,11 @@
             </td>
             <td>
                 <div style="display: flex; gap: 10px;">
-                    {% if vacation.can_redact %}
-                    <a class="btn-icon" href="#" title="Редактировать отпуск">
+                    <a class="btn-icon" href="{% url 'vacation_edit' year=vacation.vacation_year vac_id=vacation.id %}" title="Редактировать отпуск">
                         <img src="{% static 'edit.svg' %}" alt="Редактировать">
                     </a>
-                    {% endif %}
-                    <a class="btn-icon" href="#" title="Удалить отпуск">
+                    <a class="btn-icon delete-btn" href="{% url 'vacation_delete' vacation.id %}" title="Удалить отпуск"
+                    onclick="confirmDeletion(event, this)">
                         <img src="{% static 'delete1.svg' %}" alt="Удалить">
                     </a>
                 </div>
@@ -64,7 +67,7 @@
         </tr>
         {% endfor %}
         {% else %}
-        <tr>
+        <tr class="no-border-row">
             <td colspan="3" style="text-align: left; font-size: 20px; color: #5d6778;">Не найдено ближайших отпусков.</td>
         </tr>
         {% endif %}
@@ -79,10 +82,18 @@
         </tr>
     </table>
 </div>
-<div id="leave-dropdown-my" style="width:212px; display: none; position: absolute; background-color: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 5px; z-index: 2000;">
+<div id="leave-dropdown-my" style="width: 212px; display: none; position: absolute; background-color: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 5px; z-index: 2000;">
     <ul style="list-style-type: none; padding: 0; margin: 0;">
-        <li><a href="#"><span class="text">Отпуск на</span> <span class="year">2024</span> <span class="text">год</span></a></li>
-        <li><a href="#"><span class="text">Отпуск на</span> <span class="year">2025</span> <span class="text">год</span></a></li>
+        <li class="vacation-item">
+            <a href="{% url 'vacation_new' 2024 %}" class="vacation-link">
+                <span class="text">Отпуск на</span> <span class="year">2024</span> <span class="text">год</span>
+            </a>
+        </li>
+        <li class="vacation-item">
+            <a href="{% url 'vacation_new' 2025 %}" class="vacation-link">
+                <span class="text">Отпуск на</span> <span class="year">2025</span> <span class="text">год</span>
+            </a>
+        </li>
     </ul>
 </div>
 
@@ -116,5 +127,16 @@
             event.stopPropagation();
         });
     });
+
+    function confirmDeletion(event, element) {
+        event.preventDefault(); // Остановить переход по ссылке
+
+        const userConfirmed = confirm("Вы уверены, что хотите удалить отпуск?");
+        if (userConfirmed) {
+            // Если пользователь нажал "Да", перенаправляем на URL удаления
+            window.location.href = element.href;
+        }
+        // Если пользователь нажал "Нет", ничего не делаем
+    }
 </script>
 {% endblock %}

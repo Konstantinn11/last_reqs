@@ -78,7 +78,7 @@
 	<aside class="aside custom-aside" style="margin: 4px; border-radius: 10px; width: 400px;">
 		<div style="display: flex; flex-direction: row; flex-wrap: nowrap; justify-content: center; align-items: center; margin: 5px;">
 			<h4>Отпуска сотрудников</h4>
-			<a class="btn sib" style="background: #15a362; width: 220px; color: white; font-size: 16px;" href="#" onclick="openFormCreateVac(this)">
+			<a class="btn sib" style="background: #15a362; width: 220px; color: white; font-size: 16px;" href="{% url 'vacation_new' year=year %}?employee_name={{current_user_name}}">
 				<div style="display: flex; cursor: pointer; justify-content: center; align-items: center;">
 					<img style="height: 20px; margin-right: 5px;" src="{% static 'circle_plus.png' %}">
 					Новый отпуск
@@ -98,7 +98,7 @@
 							<div style="width: 15px; height: 15px; background: {{value.color}}; border: 1px solid black; margin-right: 6px;"></div>
 							<a style="color: black" href="#">{{key}}</a>
 							{% if key == request.user.get_full_name or request.user.get_full_name in bosses %}
-								<a id="creat_cur_{{key}}" style="color: black; font-size: 0.875em; text-decoration: underline; margin-left: 10px;" href="#" onclick="openFormCreateVac(this)">
+								<a id="creat_cur_{{key}}" style="color: black; font-size: 0.875em; text-decoration: underline; margin-left: 10px;" href="{% url 'vacation_new' year=year %}?employee_name={{ key }}">
 									<div style="cursor: pointer; justify-content: center; align-items: center;" class="hover-icon">
 										<img style="height: 20px;" src={% static "trello_plus.svg" %}>
 									</div>
@@ -107,20 +107,20 @@
 						</div>
 						<div style="display: flex; flex-direction: row; flex-wrap: wrap; margin-left: 20px;">
 							{% for date in value.dates %}
-								{% if date.vac_can_redact %}
 									{% if key == request.user.get_full_name or request.user.get_full_name in bosses %}
-										<a id="{{key}}_{{date.vac_id}}" style="color: #15a362; font-size: 0.875em; text-decoration: underline;" href="#" onclick="openFormEditVac(this)">{{date.d}}</a>
+										<a id="{{ key }}_{{ date.vac_id }}" 
+										   style="color: #15a362; font-size: 0.875em; text-decoration: underline;" 
+										   href="{% url 'vacation_edit' year=year vac_id=date.vac_id %}">
+											{{ date.d }}
+										</a>
 									{% else %}
-										<a id="{{key}}_{{date.vac_id}}" style="color: #15a362; font-size: 0.875em; text-decoration: underline;" href="#">{{date.d}}</a>
+										<a id="{{ key }}_{{ date.vac_id }}" 
+										   style="color: #0a0e0c; font-size: 0.875em; text-decoration: underline;" 
+										   href="#">
+											{{ date.d }}
+										</a>
 									{% endif %}
-								{% else %}
-									{% if request.user.get_full_name in bosses %}
-										<a id="{{key}}_{{date.vac_id}}" style="color: #0a0e0c; font-size: 0.875em; text-decoration: underline;" href="#" onclick="openFormEditVac(this)">{{date.d}}</a>
-									{% else %}
-										<a id="{{key}}_{{date.vac_id}}" style="color: #0a0e0c; font-size: 0.875em; text-decoration: underline;" href="#">{{date.d}}</a>
-									{% endif %}
-								{% endif %}
-								
+						
 								{% if not forloop.last %}
 									<a>,&nbsp;</a>
 								{% endif %}

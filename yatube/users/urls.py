@@ -9,13 +9,12 @@ urlpatterns = [
     path('user_search/', views.user_search, name='user_search'),
     path('users_in_otd/<int:number>/', views.users_in_otd, name='users_in_otd'),
     path('log/', views.log_all, name='log_all'),
-    path('vacations/new/<int:year>/<int:otd>/', views.vacation_new, name='vacation_new'),
+    path('vacations/new/<int:year>/', views.vacation_new, name='vacation_new'),
     path('vacations/all/', views.vacations_start, name='vacations_start'),
 
-    path('vacations/vacation_edit/<int:year>/<int:otd>/<int:vac_id>/', views.vacation_edit, name='vacation_edit'),
-    path('vacations/vacation_delete/<int:otd>/<int:year>/<int:vac_id>/', views.vacation_delete, name='vacation_delete'),
+    path('vacations/vacation_edit/<int:year>/<int:vac_id>/', views.vacation_edit, name='vacation_edit'),
+    path('vacations/vacation_delete/<int:vac_id>/', views.vacation_delete, name='vacation_delete'),
     path('vacations/all/vac_by_us/<int:year>/<int:otd>/', views.vacations_by_user, name='vacations_by_user'),
-    path('vacations/vacation_confirm/<int:year>/<int:otd>/<int:vac_id>/', views.vacation_confirm, name='vacation_confirm'),
     path('vacations/vacation_confirm/<int:year>/<int:otd>/<str:user>/<str:day>/', views.vacation_confirm_from_day, name='vacation_confirm_from_day'),
 
     path('vacations/del_vac_by_drop/<int:otd>/<str:user_name>/<str:day>/', views.del_vac_by_drop, name='del_vac_by_drop'),
@@ -31,8 +30,6 @@ urlpatterns = [
 
     path('vacations/vac_2/<int:year>/<int:otd>/', views.vac_2, name='vac_2'),
     path('vacations/vac_2_days/<int:year>/<int:otd>/', views.vac_2_days, name='vac_2_days'),
-    path('vacations/add_new_vac/<int:otd>/<int:day_s>/<int:month_s>/<int:year_s>/<int:long>/<int:day_e>/<int:month_e>/<int:user_id>/', views.add_new_vac, name='add_new_vac'),
-    path('vacations/vac_edit/<int:otd>/<int:day_s>/<int:month_s>/<int:year_s>/<int:long>/<int:day_e>/<int:month_e>/<int:user_id>/<int:vac_id>/', views.vac_edit, name='vac_edit'),
     path('vac_all/<int:otd>/', views.vac_all, name='vac_all'),
     path('vac_calendars/<int:otd>/', views.vac_calendars, name='vac_calendars'),
     path('vac_my_vacations/', views.vac_my_vacations, name='vac_my_vacations'),

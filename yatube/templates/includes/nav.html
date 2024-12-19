@@ -27,6 +27,10 @@
 	.darker-nav:hover {
 		color: green;
 	}
+
+	.btn.sib:hover { 
+		background-color: rgba(21, 163, 98, 0.8) !important; 
+	}
 </style>
 {% load static %}
 {% load user_filters %}
@@ -53,6 +57,22 @@
 			<span style="font-size: 20px; color: #5d6778; font-weight: normal; display: inline;">
 				&nbsp;/ Мои отпуска
 			</span>
+			{% elif show_person %}
+				{% if employee_name %}
+					<a style="margin-left: 375px;" class="darker-nav" href="{% url 'vac_2' year=year otd=0 %}">
+						График отпусков
+					</a>
+					<span style="font-size: 20px; color: #5d6778; font-weight: normal; display: inline;">
+						&nbsp;/ Добавление отпуска
+					</span>
+				{% else %}
+					<a style="margin-left: 375px;" class="darker-nav" href="{% url 'vac_my_vacations' %}">
+						Мои отпуска
+					</a>
+					<span style="font-size: 20px; color: #5d6778; font-weight: normal; display: inline;">
+						&nbsp;/ Новый отпуск
+					</span>
+				{% endif %}
 			{% elif show_all_vacations %}
 			<a style="margin-left: 375px;" class="darker-nav" href="{% url 'vac_all' 0 %}">
 				Ближайшие отпуска
@@ -74,6 +94,29 @@
 					</a>
 					<span style="font-size: 20px; color: #5d6778; font-weight: normal; display: inline;">
 						&nbsp;/ Отпуск {{ vacation_user_name }}
+					</span>
+				{% endif %}
+			{% elif redact_vac %}
+				{% if request.GET.from == 'all_vacations' %}
+					<a style="margin-left: 375px;" class="darker-nav" href="{% url 'vac_all_vacations' %}">
+						Все отпуска
+					</a>
+					<span style="font-size: 20px; color: #5d6778; font-weight: normal; display: inline;">
+						&nbsp;/ Редактирование отпуска
+					</span>
+				{% elif request.GET.from == 'calendars' %}
+					<a style="margin-left: 375px;" class="darker-nav" href="{% url 'vac_2' year=year otd=0 %}">
+						График отпусков
+					</a>
+					<span style="font-size: 20px; color: #5d6778; font-weight: normal; display: inline;">
+						&nbsp;/ Редактирование отпуска
+					</span>
+				{% else %}
+					<a style="margin-left: 375px;" class="darker-nav" href="{% url 'vac_my_vacations' %}">
+						Мои отпуска
+					</a>
+					<span style="font-size: 20px; color: #5d6778; font-weight: normal; display: inline;">
+						&nbsp;/ Редактирование отпуска
 					</span>
 				{% endif %}
 			{% endif %}

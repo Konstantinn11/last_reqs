@@ -2,10 +2,10 @@
 {% load user_filters %}
 {% load cache %}
 {% load static %}
-{% block title %}Добавить отпуск{% endblock %}
+{% block title %}Редактировать отпуск{% endblock %}
 {% block header %}
 <div style="display: flex; flex-direction: row; justify-content: left; align-items: center; flex-wrap: nowrap; width: 120%;">
-    <a style="color: black; font-weight: bold; font-size: 35px; text-align: left; line-height: 50px; white-space: nowrap; margin-left: 358px;">Добавление отпуска на {{ year }}</a>
+    <a style="color: black; font-weight: bold; font-size: 35px; text-align: left; line-height: 50px; white-space: nowrap; margin-left: 358px;">Редактирование отпуска на {{ year }}</a>
 </div>
 
 <style>
@@ -20,14 +20,10 @@
     .tooltip-text { visibility: hidden; width: 200px; background-color: rgba(0, 0, 0, 0.9); color: white; text-align: center; border-radius: 5px; padding: 5px; position: absolute; z-index: 2; bottom: 120%; left: 50%; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s; font-size: 15px; }
     .tooltip-container:hover .tooltip-text { visibility: visible; opacity: 1; }
     .tooltip-text::after { content: ""; position: absolute; bottom: -9px; left: 50%; transform: translateX(-50%); width: 0; height: 0; z-index: 1; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 9px solid rgba(0, 0, 0, 0.9); }
-    .input-with-icon { background-image: url("{% static 'keyboard_arrow_down.svg' %}"); background-repeat: no-repeat; background-position: right 10px center; background-size: 24px; padding-right: 50px; font-size: 19px; width: 520px; border-radius: 5px; border: 1px solid #ddd; background-color: white;
-    height: 45px; font-weight: normal; text-align: left; padding-left: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
-    .input-with-icon:focus { border-color: #0d6efd; outline: none; }
-    select#employee { font-size: 19px; width: 520px; border-radius: 5px; border: 1px solid #ddd; background-color: white; height: 45px; font-weight: normal; text-align: left; padding-left: 10px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: border-color 0.3s ease;
-    background-image: url("{% static 'keyboard_arrow_down.svg' %}"); background-repeat: no-repeat; background-position: right 10px center; background-size: 24px; padding-right: 50px; }
-    select#employee:focus { border-color: #0d6efd; outline: none; }
     .form-control { width: 340px !important; height: 45px !important; font-size: 19px; background-color: white !important; border: 1px solid #ddd; border-radius: 5px; padding-left: 10px; transition: border-color 0.3s ease; }
     .form-control:focus { border-color: #0d6efd; outline: none; box-shadow: none; }
+    .btn-delete { background-color: #d26d69; font-family: 'Calibri'; font-style: normal; font-weight: 700; width: 140px; height: 44px; font-size: 20px; padding: 0 10px; border-radius: 5px; color: white; text-align: center; display: flex; align-items: center; justify-content: center; text-decoration: none; margin-left: 445px; }
+    .btn-delete:hover { background-color: rgba(210, 109, 105, 0.9); text-decoration: none; color: white; }
 </style>
 {% endblock %}
 
@@ -40,38 +36,14 @@
     <form method="post" enctype="multipart/form-data" style="width: 100%;">
         {% csrf_token %}
 
-        {% if is_boss %}
-            <div style="display: flex; align-items: center; margin-bottom: 30px;">
-                <label for="employee" style="font-size: 21px; flex: 0 0 250px; text-align: left; color: #5d6778;">
-                    Сотрудник<span style="color: red;">&nbsp;*</span>
-                </label>
-                {% if employee_name %}
-                    <select name="employee" id="employee">
-                        {% for employee in employees %}
-                            <option value="{{ employee.user.id }}" style="font-weight: normal;"
-                                {% if employee.user.get_full_name == employee_name %}selected{% endif %}>
-                                {{ employee.user.get_full_name }}
-                                {% if employee.position %}
-                                    ({{ employee.position.position }})
-                                {% endif %}
-                            </option>
-                        {% endfor %}
-                    </select>
-                {% else %}
-                    <select name="employee" id="employee">
-                        {% for employee in employees %}
-                            <option value="{{ employee.user.id }}" style="font-weight: normal;"
-                                    {% if employee.user.id == user.id %}selected{% endif %}>
-                                {{ employee.user.get_full_name }} 
-                                {% if employee.position %}
-                                    ({{ employee.position.position }})
-                                {% endif %}
-                            </option>
-                        {% endfor %}
-                    </select>
-                {% endif %}
+        <div style="display: flex; align-items: center; margin-bottom: 30px;">
+            <label for="employee" style="font-size: 21px; flex: 0 0 250px; text-align: left; color: #5d6778;">
+                Сотрудник<span style="color: red;">&nbsp;*</span>
+            </label>
+            <div style="font-size: 21px; color: #5d6778; flex: 1; text-align: left; margin-top: -6px;">
+                {{ employee_name }}{% if employee_position %} ({{ employee_position }}){% endif %}
             </div>
-        {% endif %}
+        </div>
 
         {% for field in form %}
             <div style="display: flex; align-items: center; margin-bottom: 30px;">
@@ -100,12 +72,17 @@
             {% endif %}
         {% endfor %}
 
-        <div style="display: flex; justify-content: flex-start; margin-top: 30px;">
-            <button class="btn-edit" type="submit">Добавить отпуск</button>
-            {% if employee_name %}
+        <div style="display: flex; justify-content: flex-start; margin-top: 40px;">
+            <button class="btn-edit" type="submit">Сохранить отпуск</button>
+            {% if request.GET.from == 'all_vacations' %}
+                <a class="btn-my-vacations" href="{% url 'vac_all_vacations' %}">Отмена</a>
+                <a class="btn-delete" href="{% url 'vacation_delete' vac_id=vac_id %}?from=all_vacations" onclick="confirmDeletion(event, this)">Удалить</a>
+            {% elif request.GET.from == 'calendars' %}
                 <a class="btn-my-vacations" href="{% url 'vac_2' year=year otd=0 %}">Отмена</a>
+                <a class="btn-delete" href="{% url 'vacation_delete' vac_id=vac_id %}?from=calendars" onclick="confirmDeletion(event, this)">Удалить</a>
             {% else %}
                 <a class="btn-my-vacations" href="{% url 'vac_my_vacations' %}">Отмена</a>
+                <a class="btn-delete" href="{% url 'vacation_delete' vac_id=vac_id %}" onclick="confirmDeletion(event, this)">Удалить</a>
             {% endif %}
         </div>
     </form>
@@ -116,6 +93,15 @@
 <script src="{% static 'libs/ru.js' %}"></script>
 
 <script>
+    function confirmDeletion(event, element) {
+        event.preventDefault(); // Остановить переход по ссылке
+
+        const userConfirmed = confirm("Вы уверены, что хотите удалить отпуск?");
+        if (userConfirmed) {
+            window.location.href = element.href;
+        }
+    }
+
     const holidays = JSON.parse('{{ holidays_json|escapejs }}');
 
     $(document).ready(function() {

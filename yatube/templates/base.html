@@ -274,6 +274,21 @@
     .submenu-tab:hover {
         color: #000;
     }
+
+    .vacation-link { 
+        display: block; 
+        background-color: white; 
+        color: #000; 
+        text-decoration: none; 
+        padding: 10px; 
+        margin: -10px; 
+        transition: background-color 0.3s ease; 
+        border-radius: 5px;
+    }
+
+    .vacation-link:hover {
+        background-color: rgba(93, 103, 120, 0.05);
+    }
 </style>
 
 {% load static %}
@@ -338,10 +353,18 @@
             <span id="close-info" class="close-btn">×</span>
         </div>
 
-        <div id="leave-dropdown" style="width:212px; display: none; position: absolute; background-color: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 5px; z-index: 2000;">
+        <div id="leave-dropdown" style="width: 212px; display: none; position: absolute; background-color: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 5px; z-index: 2000;">
             <ul style="list-style-type: none; padding: 0; margin: 0;">
-                <li><a href="#"><span class="text">Отпуск на</span> <span class="year">2024</span> <span class="text">год</span></a></li>
-                <li><a href="#"><span class="text">Отпуск на</span> <span class="year">2025</span> <span class="text">год</span></a></li>
+                <li class="vacation-item">
+                    <a href="{% url 'vacation_new' 2024 %}" class="vacation-link">
+                        <span class="text">Отпуск на</span> <span class="year">2024</span> <span class="text">год</span>
+                    </a>
+                </li>
+                <li class="vacation-item">
+                    <a href="{% url 'vacation_new' 2025 %}" class="vacation-link">
+                        <span class="text">Отпуск на</span> <span class="year">2025</span> <span class="text">год</span>
+                    </a>
+                </li>
             </ul>
         </div>
         
