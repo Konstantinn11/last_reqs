@@ -110,7 +110,7 @@
 									{% if key == request.user.get_full_name or request.user.get_full_name in bosses %}
 										<a id="{{ key }}_{{ date.vac_id }}" 
 										   style="color: #15a362; font-size: 0.875em; text-decoration: underline;" 
-										   href="{% url 'vacation_edit' year=year vac_id=date.vac_id %}">
+										   href="{% url 'vacation_edit' year=year vac_id=date.vac_id %}?from=calendars">
 											{{ date.d }}
 										</a>
 									{% else %}
